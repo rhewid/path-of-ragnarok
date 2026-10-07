@@ -86,10 +86,10 @@ Six sit **on the rim between two regions** and are the only way across from one 
 |---|---|
 | Iron Vow | Cannot be flinched when hit (endless Endure); -15% damage taken from everything; -15% attack speed |
 | Sanctified Mind | Casting cannot be interrupted; +30% healing skill power; -25% physical damage |
-| Overchannel | +30% MATK; +25% cast time; -20% Max HP |
+| Overchannel | +30% MATK; +25% cast time; - Max HP |
 | Deadeye | +25% ranged attack damage; +30 HIT; -30% melee attack damage |
-| Phantom Gambit | +20% attack speed; +4 Perfect Dodge; -25% Max HP |
-| Golden Gamble | +20% EXP from monsters; +20% monster item drop rate; -20% physical damage |
+| Phantom Gambit | + attack speed; +4 Perfect Dodge; -25% Max HP |
+| Golden Gamble | +20% EXP from monsters; +1% monster item drop rate; -20% physical damage |
 | Bulwark of Ages | A single hit takes at most 25% of Max HP; cannot be knocked back; -20% physical damage |
 | Blood Pact | 20% chance to drain 10% of damage as HP; -30% healing received; -30% HP from items |
 | Gemless Grace | Skills need no gemstones; +10% magic damage; -25% Max SP |
