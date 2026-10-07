@@ -6,13 +6,13 @@ A mod for [Ragnarok Offline](https://github.com/Flux159/ragnarokoffline.app) tha
 - **Every job level earns a passive point**, up to **50** (both numbers are settings).
 - The tree is **one web of 695 nodes**, not a grid: nodes join along rings and spokes, so you grow outward from your start in a direction you pick, and the other classes' regions are reachable too.
 - Nodes give **stats, flat and % bonuses, resistances to every element and race, damage against every element and race, skill boosts, EXP and drop rate, and utility skills**.
-- **168 notables** (bigger nodes with two or three effects), **12 keystones** (powerful, with a price), **12 masteries** (choose one of several effects), **6 card sockets** **24 job-line branches** and **24 rebirth branches** for the second classes.
+- **168 notables** (bigger nodes with two or three effects), **12 keystones** (powerful, with a price), **12 masteries** (choose one of several effects), **6 card sockets**, **24 job-line branches** (second classes), **24 rebirth branches** (High classes) and **4 teleport rifts**.
 - **Search box** at the top of the window: type a name, an effect or a skill (`double strafe`, `fire resist`, `identify`, `socket`, `keystone`...). Matches light up, the rest dims, Enter jumps to the next match.
 - Open it with **Alt+P**, the **PT** button under the minimap, or the **@passive** chat command.
 
 **Designed mainly for pre-renewal.** The tree was built and tested on a pre-renewal server; the numbers (stat and damage values, skill boosts, auto-cast chances, the 50-point cap) are balanced for pre-renewal gameplay. It also loads on renewal (it ships a separate card table for each era and only uses bonuses both eras have), but renewal has not been tested and its values have not been balanced for renewal's stronger skills and higher stats.
 
-Needs Ragnarok Offline 1.4.5 or newer. **Not yet tested in game** (see "Known limits").
+Needs Ragnarok Offline 1.4.5 or newer. The core (allocating, refunding, stats) is confirmed in game; some newer parts are not yet (see "Known limits").
 
 ## Install
 
@@ -70,11 +70,11 @@ Skill nodes use rAthena's per-skill bonuses: damage (`bSkillAtk`), healing (`bSk
 - Only cards whose script is plain `bonus` lines work (generated per era from rAthena's item database: about 650 in renewal, 390 in pre-renewal). Cards with conditions (refine level, class, "when attacking with...") or auto-spell effects are left out. MVP cards are left out unless the setting allows them.
 - The card list is built when the mod is generated from the rAthena item database, so cards added by other mods are not socketable.
 
-### Layout: origin in the centre, keystones on the rim (0.9.0)
+### Layout: origin in the centre, keystones on the rim
 
 Each origin sits in the centre of the tree and the region opens outward from it: first the inner notables, then the rings and rim clusters. **There is no direct bridge between neighbouring regions any more.** To reach another class's bonuses you walk out to the keystone on the border (a trade-off node, so you pay for crossing) or around the far outer ring, and from there you branch into the next region. The six gateway nodes between the very centre and the origins are for the **Wanderer** start only: they are how a Wanderer reaches any class's origin, and class characters cannot use them as a shortcut (the window will not route a path through them).
 
-Because node ids and links changed, every character is **refunded once for free** on the first login after the update (cards go back to the inventory), with a chat message. Use your points again from the new centre.
+Whenever the tree layout changes between versions, every character is **refunded once for free** on the first login after the update (cards go back to the inventory), with a chat message, so no allocation is left hanging.
 
 ### Keystones
 
@@ -86,18 +86,18 @@ Six sit **on the rim between two regions** and are the only way across from one 
 |---|---|
 | Iron Vow | Cannot be flinched when hit (endless Endure); -15% damage taken from everything; -15% attack speed |
 | Sanctified Mind | Casting cannot be interrupted; +30% healing skill power; -25% physical damage |
-| Overchannel | +30% MATK; +25% cast time; - Max HP |
+| Overchannel | +30% MATK; +25% cast time; -20% Max HP |
 | Deadeye | +25% ranged attack damage; +30 HIT; -30% melee attack damage |
-| Phantom Gambit | + attack speed; +4 Perfect Dodge; -25% Max HP |
+| Phantom Gambit | +20% attack speed; +4 Perfect Dodge; -25% Max HP |
 | Golden Gamble | +20% EXP from monsters; +1% monster item drop rate; -20% physical damage |
-| Bulwark of Ages | A single hit takes at most 25% of Max HP; cannot be knocked back; -20% physical damage |
-| Blood Pact | 20% chance to drain 10% of damage as HP; -30% healing received; -30% HP from items |
+| Bulwark of Ages | A single hit can take at most 25% of your Max HP; cannot be knocked back; -20% physical damage |
+| Blood Pact | 20% chance to drain 10% of damage as HP; -30% healing received from skills; -30% HP restored by items |
 | Gemless Grace | Skills need no gemstones; +10% magic damage; -25% Max SP |
 | Gambler's Fallacy | +30% critical damage; +20 CRIT; -20 HIT |
-| Pyre Pact | Your attacks become Fire element; +25% Fire magic damage; +25% damage taken from Water |
+| Pyre Pact | Your attacks become Fire element; +25% Fire magic damage; -25% Water resistance |
 | Glass Cannon | +40% physical damage; +40% magic damage; +40% damage taken from everything |
 
-### The outer ring (new in 0.3.0)
+### The outer ring
 
 A ring around the whole tree (radius 1020) that every rim cluster plugs into, so the tree can be walked all the way round. Per region it holds:
 
@@ -105,7 +105,20 @@ A ring around the whole tree (radius 1020) that every rim cluster plugs into, so
 - **Four notables**, some with **auto-cast** (a chance to cast Magnum Break, Holy Light, Thunder Storm or Blitz Beat when you attack), drains, status resistances and trap damage. Six need you to **know a skill** at a level before you can allocate them (the tooltip says which).
 - **Two masteries**: allocate, then click the node and pick one option (Swords / Spears / Axes, an element, a hunting target...). The node does nothing until you choose; you can change the choice for free.
 
-### Weak-skill clusters (new in 0.4.0)
+### How big the skill boosts are
+
+| Where | Small node | Notable / capstone |
+|---|---|---|
+| Rim skill clusters (a class's main skills) | +4-5% damage | +8-10% on the end notable |
+| Weak-skill clusters: Basics | +6% damage | +12-14% |
+| Weak-skill clusters: Support | -10% SP cost, +1 skill level | +2 levels, +8-12% healing |
+| Weak-skill clusters: Situational | +10% damage | +18-20% |
+| Job-line branches (second class) | +5-6% damage | +8% / +10-12% on the capstone |
+| Rebirth branches | +6% damage | +8% / +12% on the capstone |
+
+Some end notables also cut a skill's SP cost by 10-15%.
+
+### Weak-skill clusters
 
 Three clusters per region hang off the outer ring, aimed at skills that fall behind:
 
@@ -113,13 +126,13 @@ Three clusters per region hang off the outer ring, aimed at skills that fall beh
 |---|---|---|
 | Basics | Low-damage starter skills | Bash, Magnum Break, Napalm Beat, Soul Strike, Arrow Shower, Stone Fling, Envenom, Mammonite: damage and cheaper SP, ending in a notable that stacks them |
 | Support | Buffs and heals | Heal power and SP cost, plus **skill levels** for Endure, Provoke, Angelus, Blessing, Increase AGI, Safety Wall, Improve Concentration, Cloaking, Enchant Poison, Adrenaline Rush, Over Thrust, Weapon Perfection (a higher level lasts longer) |
-| Situational | Skills few people use | Spear Stab, Spear Boomerang, Shield Charge, Turn Undead, Signum Crucis, Decrease AGI, Frost Diver, Fire Wall, Frost Nova, Skid Trap, Sandman, Shockwave Trap, Sand Attack, Intimidate, Venom Splasher, Marine Sphere, Bomb: large damage boosts (+10% per small node, +18-20% on the notable) |
+| Situational | Skills few people use | Spear Stab, Spear Boomerang, Shield Charge, Turn Undead, Signum Crucis, Decrease AGI, Frost Diver, Fire Wall, Frost Nova, Skid Trap, Sandman, Shockwave Trap, Sand Attack, Intimidate, Venom Splasher, Marine Sphere, Bomb: large damage boosts (+10% per small node, +18-20% on the notable; see the table above) |
 
 The skill-level nodes only work for skills the character already knows and stop at Lv 13 (the same `addtoskill` mechanism as the Blessing nodes, still not confirmed in game).
 
-### Reflex clusters: low-level skills on your attacks (new in 0.6.0)
+### Reflex clusters: low-level skills on your attacks
 
-Two short chains per region (on the outer ring, next to the region borders) whose nodes cast a **low-level skill on your normal attacks**: "4% chance to cast Fire Bolt Lv 1 when attacking", up to "3% Lv 3" on the notable at the end. The casts are free (no SP, cast time or items) and use rAthena's `bAutoSpell`. Skills by region:
+Two short chains per region (on the outer ring, next to the region borders) whose nodes cast a **low-level skill on your normal attacks**: "4% chance to cast Fire Bolt Lv 1 when attacking": 2-4% at Lv 1-2 on the small nodes and 2-3% at Lv 2-5 on the notable at the end of each chain. The casts are free (no SP, cast time or items) and use rAthena's `bAutoSpell`. Skills by region:
 
 | Region | Skills |
 |---|---|
@@ -130,21 +143,21 @@ Two short chains per region (on the outer ring, next to the region borders) whos
 | Thief | Envenom, Sonic Blow, Grimtooth, Sand Attack, Back Stab, Stone Fling, Raid, Intimidate |
 | Merchant | Mammonite, Cart Revolution, Hammer Fall, Bomb, Acid Terror, Marine Sphere, Cart Termination |
 
-**Weapon requirements (0.7.0):** an auto-cast only applies while you could use the skill: Double Strafe, Arrow Shower, Arrow Repel and Sharpshooting need a **bow**, Pierce and the Spear skills a **spear**, Sonic Blow and Grimtooth a **katar or dagger**, Shield Boomerang a **shield**, Blitz Beat a **falcon** (the **Falconry** notable on the Archer outer ring gives any class Falconry Mastery and a falcon), Cart Revolution a **cart**, Bash and Cart Termination any weapon except a bow, and so on. The requirement is read from rAthena's skill database and shown in the tooltip ("needs Bow"). It is checked whenever your stats are recalculated (equipping or swapping a weapon, mounting, a falcon or cart change), so the node switches on and off with your gear. Mage skills (Fire Bolt and the other MG_/WZ_ skills) work with any weapon. Mount skills and Wug/Warg states are not checked. The weak-skill "recast" nodes are separate (they repeat a skill you just used, so the weapon is already right).
+**Weapon requirements:** an auto-cast only applies while you could use the skill: Double Strafe, Arrow Shower, Arrow Repel and Sharpshooting need a **bow**, Pierce and the Spear skills a **spear**, Sonic Blow and Grimtooth a **katar or dagger**, Shield Boomerang a **shield**, Blitz Beat a **falcon** (the **Falconry** notable on the Archer outer ring gives any class Falconry Mastery and a falcon), Cart Revolution a **cart**, Bash and Cart Termination any weapon except a bow, and so on. The requirement is read from rAthena's skill database and shown in the tooltip ("needs Bow"). It is checked whenever your stats are recalculated (equipping or swapping a weapon, mounting, a falcon or cart change), so the node switches on and off with your gear. Mage skills (Fire Bolt and the other MG_/WZ_ skills) work with any weapon. Mount skills and Wug/Warg states are not checked. The weak-skill "recast" nodes are separate (they repeat a skill you just used, so the weapon is already right).
 
-### Free recasts (new in 0.5.0)
+### Free recasts
 
-Sixteen notables carry a **free recast**: "4% chance to cast Double Strafe again for free (Lv 5) on the same target". When you use the skill, the server (rAthena's `bAutoSpellOnSkill`) casts it a second time on the same target with no SP, no cast time and no items. Skills with one: Bash, Magnum Break, Heal, Holy Light, Fire / Cold / Lightning Bolt, Napalm Beat, Soul Strike, Double Strafe, Arrow Shower, Sonic Blow, Envenom, Mammonite, Cart Revolution, Pierce, Sharpshooting, Meteor Assault, Cart Termination. They sit on the notables of the skill clusters and the Basics clusters, and on some job-line capstones. The recast has a fixed level (shown in the tooltip), not the level of the cast that triggered it, so a character who has the skill below that level gets a small boost. The recast itself does not trigger further recasts.
+17 notables carry a **free recast**: "5% chance to cast Double Strafe again for free (Lv 5) on the same target". When you use the skill, the server (rAthena's `bAutoSpellOnSkill`) casts it a second time on the same target with no SP, no cast time and no items. Chances: **5%** for Double Strafe, Arrow Shower, Napalm Beat, Soul Strike, Holy Light (Lv 1) and Cart Revolution (Lv 1); **4%** for Bash, Magnum Break, Heal, Sonic Blow, Envenom, Mammonite and Pierce; **3%** for Fire, Cold and Lightning Bolt, Sharpshooting (Lv 3), Meteor Assault (Lv 3), Cart Termination and a second Sonic Blow on the Assassin Cross capstone. All other recasts use Lv 5. They sit on the notables of the skill clusters and the Basics clusters, and on some job-line capstones. The recast has a fixed level (shown in the tooltip), not the level of the cast that triggered it, so a character who has the skill below that level gets a small boost. The recast itself does not trigger further recasts.
 
-### Drop rate: small values, small cap (0.14.0 / 0.15.0)
+### Drop rate: small values, small cap
 
 Item drop rate is deliberately tiny: a small drop node gives **+0.1%**, the Prospector / Merchant Prince / Tycoon / Mammon's Blessing notables and the Plunder mastery **+0.05%**, and the Golden Gamble keystone **+1%**, about **2% if you took every one of them**. As a safety net the total is capped by the setting "Most extra item drop rate the tree can give" (2% by default; 0 = none). rAthena only accepts whole percents for this bonus, so the sum is rounded down: nothing applies until you have collected 1%, then it steps up in whole percents. The Active effects list shows your total and what is applied. Cards in sockets are not part of the cap. EXP bonuses are not capped.
 
-### Active effects list (new in 0.15.0)
+### Active effects list
 
 A panel on the right of the window lists **everything your passives give you**, summed up: all stat, damage, resistance and skill bonuses (the same effect from many nodes is one line), the skills the tree teaches, your mastery choices and your socketed cards. Penalties are red. The **Active effects** button in the top bar shows or hides it, and the window remembers your choice.
 
-### Race wagers in front of the outer keystones (new in 0.13.0)
+### Race wagers in front of the outer keystones
 
 The six keystones on the outer ring (Bulwark of Ages, Blood Pact, Gemless Grace, Gambler's Fallacy, Pyre Pact, Glass Cannon) now sit one step further out. Where each used to be there is a plain node, a **wager** on one race: **+5% damage to the race and +5% damage taken from it**. The ring runs through it and the keystone hangs off it, so you take the wager (which also links the two regions) to reach the keystone.
 
@@ -157,9 +170,8 @@ The six keystones on the outer ring (Bulwark of Ages, Blood Pact, Gemless Grace,
 | Plant Wager | Plant | Pyre Pact |
 | Brute Wager | Brute | Glass Cannon |
 
-Because links changed, characters are refunded once for free on the next login (tree version 4).
 
-### Teleport nodes (new in 0.12.0)
+### Teleport nodes
 
 Four **Rift** nodes, two linked pairs, let you jump across the tree. Each hangs off an outer-ring node beside a rim keystone and is joined, straight across the tree, to its partner beside the opposite keystone:
 
@@ -172,11 +184,11 @@ Four **Rift** nodes, two linked pairs, let you jump across the tree. Each hangs 
 
 A path through a pair costs 3 points (neighbour, Rift, Rift) and you keep both stat points. The dashed link between two Rifts only shows once you own it, hover one end, or it is part of the path being previewed; hovering a Rift circles its partner. Blood Pact and Pyre Pact have no Rift (a third pair is easy to add: the table is `PORTALS` in the generator).
 
-### Rebirth branches (new in 0.11.0)
+### Rebirth branches
 
 On the far outer side of every region, two more branches hang off the outer ring for **reborn** characters: Lord Knight, Paladin, High Priest, Champion, High Wizard, Professor, Sniper, Clown / Gypsy, Assassin Cross, Stalker, Whitesmith and Creator. Each has two skill nodes, a notable and a capstone. They require both the matching job line and being reborn (a High class, not just a second class); the tooltip says "Job line: Lord Knight (reborn Knight)". They concentrate on the skills those classes get and often leave unused (Head Crush, Joint Beat, Chain Crush Combo, Napalm Vulcan, Falcon Assault, Slim Potion Pitcher, Raid...).
 
-### Job-line branches (new in 0.3.0)
+### Job-line branches
 
 Each start node grows a short stem with **two branches, one per second class** of that first class: Knight / Crusader, Priest / Monk, Wizard / Sage, Hunter / Bard-Dancer, Assassin / Rogue, Blacksmith / Alchemist. A branch only allocates for characters of that line (third and transcended classes count as their second class). Each has two skill nodes, a notable and a capstone, built around that job's skills.
 
@@ -215,7 +227,7 @@ Press **Apply** after changing settings; the server restarts. Reload the client 
 
 ## Known limits (untested in game)
 
-- The core (allocating, refunding, stats) has been confirmed in game. The parts added in 0.2.0 and 0.3.0 (card sockets, masteries, job-line branches, auto-cast, status-on-hit, drains, regeneration, weapon damage, gemstone-free, hit cap) have not. The script uses `bonus_script` + `callfunc` inside a `bonus_script`, `eaclass()` for the class, and the `@@reply` protocol of the other client-window mods; any of them failing shows in the map log.
+- The core (allocating, refunding, stats, skill damage boosts, free recasts) has been confirmed in game. Not yet confirmed: card sockets, masteries, job-line and rebirth branches, status-on-hit, drains, regeneration, weapon damage, gemstone-free, the hit cap, teleport rifts and the falcon grant. The script uses `bonus_script` + `callfunc` inside a `bonus_script`, `eaclass()` for the class, and the `@@reply` protocol of the other client-window mods; any of them failing shows in the map log.
 - **Skill level nodes** (`addtoskill` from inside the bonus script) are the least certain part: they may not refresh the skill window until a relog, or may not apply at all.
 - Card bonuses run through the same bonus script as everything else. A weapon card's effect is applied to the right hand; a second weapon in the left hand does not get it.
 - A skill taught to a class that does not normally have it may not show in the browser client's skill window until a relog.
@@ -223,14 +235,14 @@ Press **Apply** after changing settings; the server restarts. Reload the client 
 - Characters that were given passive bonuses and then reborn to a Novice keep the bonuses until they pick a first class again.
 - Lowering the "Most passive points" setting below what a character has already spent leaves the allocated nodes in place; it just stops new ones.
 - Class mapping for Taekwon, Summoner, Gangsi and Super Novice (centre start) and Gunslinger/Ninja is my choice, not something the game dictates. It is one `switch` in `L_Sync` of the template.
-- - **Auto-cast nodes** use rAthena's `bAutoSpell` from inside the same bonus script. It is the same command cards use, but it has not been tried from a bonus script here; if a chance never fires, tell me.
+- **Auto-cast nodes** use rAthena's `bAutoSpell` from inside the same bonus script. It is the same command cards use, but it has not been tried from a bonus script here; if a chance never fires, tell me.
 - Status-on-hit chances (`bAddEff`) only trigger on weapon attacks, not on spells.
 - The "Hard Cap" keystone (`bAbsorbDmgMaxHP2`) uses the official behaviour: a hit above the cap is cut down to it.
-- Version 0.3.0 adds 174 nodes at the end of the id list; existing allocations keep working. A mastery counts as allocated but gives nothing until an option is picked.
-- Version 0.2.0 changed which node is the inner socket of each region (a small node became a socket) and added 102 nodes at the end of the id list. If you tested 0.1.0, use **Reset all** once.
+- A mastery counts as allocated but gives nothing until an option is picked.
 
 ## Changelog
 
+- **1.0.3** README brought up to date with the current values (keystones, drop rate, recast and auto-cast chances, skill boost sizes).
 - **1.0.2** Default keystone limit lowered from 3 to 2.
 - **1.0.1** The README and mod description now say the mod is built mainly for pre-renewal.
 - **1.0.0** First public release as Path of Ragnarok (renamed from the working name passive-tree; the mod name, settings and client window id changed, so remove any older passive-tree copy and re-enter your settings). The window now uses the game's own mouse pointer instead of the system one.
