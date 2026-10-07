@@ -1,0 +1,111 @@
+{
+  "name": "path-of-ragnarok",
+  "version": "1.0.0",
+  "author": "rhwski",
+  "description": "Path of Ragnarok: a Path-of-Exile style passive skill tree for every character: your first class picks the origin in the centre, each job level earns a point, and 695 connected nodes give stats, resistances, damage against races and elements, skill boosts (including weak or neglected skills), status effects, auto-casts and free skill recasts, drains, weapon masteries, EXP and drop bonuses, utility skills, 12 trade-off keystones, job-line and rebirth branches, teleport rifts and choose-one masteries. 6 sockets take cards. Search it, open it with Alt+P or @passive.",
+  "requires": {
+    "app": ">=1.4.5",
+    "era": "any"
+  },
+  "settings": [
+    {
+      "key": "max_points",
+      "type": "number",
+      "default": 50,
+      "min": 1,
+      "max": 250,
+      "label": "Most passive points a character can have",
+      "description": "The cap on points. Points come from job level, so a class with 50 job levels fills a cap of 50."
+    },
+    {
+      "key": "points_per_level",
+      "type": "number",
+      "default": 1,
+      "min": 0,
+      "max": 10,
+      "label": "Passive points per job level",
+      "description": "Job levels of a first class (Swordman, Mage, Archer, Acolyte, Merchant, Thief and the other first classes) each earn this many points, up to the cap. A second class or beyond starts at the cap. 0 = nobody earns points."
+    },
+    {
+      "key": "refund_zeny",
+      "type": "number",
+      "default": 10000,
+      "min": 0,
+      "max": 100000000,
+      "label": "Refund price per node (zeny)",
+      "description": "Zeny charged for taking one node back. Reset all costs this once per allocated node. 0 = free."
+    },
+    {
+      "key": "allow_refund",
+      "type": "boolean",
+      "default": true,
+      "label": "Allow refunds",
+      "description": "Off: allocated nodes are permanent."
+    },
+    {
+      "key": "value_mult",
+      "type": "number",
+      "default": 100,
+      "min": 10,
+      "max": 500,
+      "label": "Bonus strength (%)",
+      "description": "Scales every number on the tree, penalties of keystones included. 100 = as designed, 50 = half, 200 = double."
+    },
+    {
+      "key": "allow_skills",
+      "type": "boolean",
+      "default": true,
+      "label": "Nodes can teach skills",
+      "description": "Some notables teach a skill (Item Appraisal, Heal, Teleport, Hiding...) and the Blessing / Increase AGI nodes add skill levels. Off: those nodes only give their stat bonuses and any skill they taught is taken back."
+    },
+    {
+      "key": "show_button",
+      "type": "boolean",
+      "default": true,
+      "label": "Show the PT button in game",
+      "description": "The window still opens with Alt+P and with the @passive command."
+    },
+    {
+      "key": "allow_cards",
+      "type": "boolean",
+      "default": true,
+      "label": "Card sockets",
+      "description": "Off: the card sockets of the tree do nothing and cards in them are not applied (they can still be taken out)."
+    },
+    {
+      "key": "mvp_cards",
+      "type": "boolean",
+      "default": false,
+      "label": "Allow MVP cards in sockets",
+      "description": "Cards dropped by MVP monsters are very strong. Off: they cannot be socketed."
+    },
+    {
+      "key": "socket_zeny",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 100000000,
+      "label": "Socketing price (zeny)",
+      "description": "Zeny charged each time a card is put into a socket. Taking one out is free. 0 = free."
+    },
+    {
+      "key": "max_keystones",
+      "type": "number",
+      "default": 3,
+      "min": 0,
+      "max": 12,
+      "label": "Most keystones a character can take",
+      "description": "Keystones are the powerful trade-off nodes. Once a character has this many, no further keystone can be allocated until one is refunded. 0 = no limit. A character that already has more keeps them."
+    },
+    {
+      "key": "max_drop_bonus",
+      "type": "number",
+      "default": 2,
+      "min": 0,
+      "max": 100,
+      "label": "Most extra item drop rate the tree can give (%)",
+      "description": "The drop rate nodes add up (0.1% for a small node, 1% for Golden Gamble) and the total is capped at this. The server only accepts whole percents, so nothing applies until the total reaches 1%. 0 = the tree gives no drop rate. Cards in sockets are not part of this."
+    }
+  ],
+  "prerenewalFolder": "pre-renewal"
+}
