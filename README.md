@@ -10,7 +10,9 @@ A mod for [Ragnarok Offline](https://github.com/Flux159/ragnarokoffline.app) tha
 - **Search box** at the top of the window: type a name, an effect or a skill (`double strafe`, `fire resist`, `identify`, `socket`, `keystone`...). Matches light up, the rest dims, Enter jumps to the next match.
 - Open it with **Alt+P**, the **PT** button under the minimap, or the **@passive** chat command.
 
-Needs Ragnarok Offline 1.4.5 or newer. Works in renewal and pre-renewal. **Not yet tested in game** (see "Known limits").
+**Designed mainly for pre-renewal.** The tree was built and tested on a pre-renewal server; the numbers (stat and damage values, skill boosts, auto-cast chances, the 50-point cap) are balanced for pre-renewal gameplay. It also loads on renewal (it ships a separate card table for each era and only uses bonuses both eras have), but renewal has not been tested and its values have not been balanced for renewal's stronger skills and higher stats.
+
+Needs Ragnarok Offline 1.4.5 or newer. **Not yet tested in game** (see "Known limits").
 
 ## Install
 
@@ -229,4 +231,5 @@ Press **Apply** after changing settings; the server restarts. Reload the client 
 
 ## Changelog
 
+- **1.0.1** The README and mod description now say the mod is built mainly for pre-renewal.
 - **1.0.0** First public release as Path of Ragnarok (renamed from the working name passive-tree; the mod name, settings and client window id changed, so remove any older passive-tree copy and re-enter your settings). The window now uses the game's own mouse pointer instead of the system one.
