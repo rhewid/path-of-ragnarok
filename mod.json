@@ -1,6 +1,6 @@
 {
   "name": "path-of-ragnarok",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "rhwski",
   "description": "Path of Ragnarok (made mainly for pre-renewal): a Path-of-Exile style passive skill tree for every character: your first class picks the origin in the centre, each job level earns a point, and 695 connected nodes give stats, resistances, damage against races and elements, skill boosts (including weak or neglected skills), status effects, auto-casts and free skill recasts, drains, weapon masteries, EXP and drop bonuses, utility skills, 12 trade-off keystones, job-line and rebirth branches, teleport rifts and choose-one masteries. 6 sockets take cards. Search it, open it with Alt+P or @passive.",
   "requires": {
@@ -91,7 +91,7 @@
     {
       "key": "max_keystones",
       "type": "number",
-      "default": 3,
+      "default": 2,
       "min": 0,
       "max": 12,
       "label": "Most keystones a character can take",

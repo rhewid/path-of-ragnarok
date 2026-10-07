@@ -78,7 +78,7 @@ Because node ids and links changed, every character is **refunded once for free*
 
 ### Keystones
 
-A character can take only a few of them: **3 by default**, adjustable with the "Most keystones a character can take" setting (0 = no limit). The window shows "keystones 1 / 3" next to your points and refuses a path that would go over; the server enforces the same. Someone who already has more keeps them but cannot add another.
+A character can take only a few of them: **2 by default**, adjustable with the "Most keystones a character can take" setting (0 = no limit). The window shows "keystones 1 / 2" next to your points and refuses a path that would go over; the server enforces the same. Someone who already has more keeps them but cannot add another.
 
 Six sit **on the rim between two regions** and are the only way across from one class to the next (apart from the outer ring, below); six more sit on the outer ring. Each trades one thing for another:
 
@@ -195,7 +195,7 @@ Some notables teach a skill with a permanent grant that survives job changes: It
 | Bonus strength (%), scales every number on the tree including the keystone penalties (not the cards) | 100 |
 | Nodes can teach skills / add skill levels | on |
 | Show the PT button in game | on |
-| Most keystones a character can take (0 = no limit) | 3 |
+| Most keystones a character can take (0 = no limit) | 2 |
 | Most extra item drop rate the tree can give (%) | 2 |
 | Card sockets | on |
 | Allow MVP cards in sockets | off |
@@ -231,5 +231,6 @@ Press **Apply** after changing settings; the server restarts. Reload the client 
 
 ## Changelog
 
+- **1.0.2** Default keystone limit lowered from 3 to 2.
 - **1.0.1** The README and mod description now say the mod is built mainly for pre-renewal.
 - **1.0.0** First public release as Path of Ragnarok (renamed from the working name passive-tree; the mod name, settings and client window id changed, so remove any older passive-tree copy and re-enter your settings). The window now uses the game's own mouse pointer instead of the system one.

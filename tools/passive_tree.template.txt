@@ -42,7 +42,7 @@ OnInit:
 	.cards = callfunc("F_ModSetting", "path-of-ragnarok", "allow_cards", 1);
 	.mvpcards = callfunc("F_ModSetting", "path-of-ragnarok", "mvp_cards", 0);
 	.sockzeny = callfunc("F_ModSetting", "path-of-ragnarok", "socket_zeny", 0);
-	.maxkeys = callfunc("F_ModSetting", "path-of-ragnarok", "max_keystones", 3);
+	.maxkeys = callfunc("F_ModSetting", "path-of-ragnarok", "max_keystones", 2);
 	$@PT_cards = .cards;
 	$@PT_dropcap = callfunc("F_ModSetting", "path-of-ragnarok", "max_drop_bonus", 2);
 	$@PT_mvpcards = .mvpcards;
