@@ -242,6 +242,7 @@ Press **Apply** after changing settings; the server restarts. Reload the client 
 
 ## Changelog
 
+- **1.0.4** Release made from the final `main` (the 1.0.3 tag pointed at an earlier commit); keystone table rows checked again. No functional change.
 - **1.0.3** README brought up to date with the current values (keystones, drop rate, recast and auto-cast chances, skill boost sizes).
 - **1.0.2** Default keystone limit lowered from 3 to 2.
 - **1.0.1** The README and mod description now say the mod is built mainly for pre-renewal.
