@@ -8,6 +8,7 @@ A mod for [Ragnarok Offline](https://github.com/Flux159/ragnarokoffline.app) tha
 - Nodes give **stats, flat and % bonuses, resistances to every element and race, damage against every element and race, skill boosts, EXP and drop rate, and utility skills**.
 - **168 notables** (bigger nodes with two or three effects), **12 keystones** (powerful, with a price), **12 masteries** (choose one of several effects), **6 card sockets**, **24 job-line branches** (second classes), **24 rebirth branches** (High classes) and **4 teleport rifts**.
 - **Search box** at the top of the window: type a name, an effect or a skill (`double strafe`, `fire resist`, `identify`, `socket`, `keystone`...). Matches light up, the rest dims, Enter jumps to the next match.
+- **Up to 5 saved builds** per character: save your tree, try another, swap back.
 - Open it with **Alt+P**, the **PT** button under the minimap, or the **@passive** chat command.
 
 **Designed mainly for pre-renewal.** The tree was built and tested on a pre-renewal server; the numbers (stat and damage values, skill boosts, auto-cast chances, the 50-point cap) are balanced for pre-renewal gameplay. It also loads on renewal (it ships a separate card table for each era and only uses bonuses both eras have), but renewal has not been tested and its values have not been balanced for renewal's stronger skills and higher stats.
@@ -153,6 +154,16 @@ Two short chains per region (on the outer ring, next to the region borders) whos
 
 Item drop rate is deliberately tiny: a small drop node gives **+0.1%**, the Prospector / Merchant Prince / Tycoon / Mammon's Blessing notables and the Plunder mastery **+0.05%**, and the Golden Gamble keystone **+1%**, about **2% if you took every one of them**. As a safety net the total is capped by the setting "Most extra item drop rate the tree can give" (2% by default; 0 = none). rAthena only accepts whole percents for this bonus, so the sum is rounded down: nothing applies until you have collected 1%, then it steps up in whole percents. The Active effects list shows your total and what is applied. Cards in sockets are not part of the cap. EXP bonuses are not capped.
 
+### Saved builds (new in 1.1.0)
+
+Each character has up to **5 build slots** (setting "Saved builds per character", 0-5; 0 turns them off). A slot keeps a copy of your tree: the allocated nodes, your mastery choices and the cards in your sockets. The **Builds:** bar under the top bar shows the slots; click one to open its panel:
+
+- **Save the current tree here** (free) - or **Overwrite** a used slot. Give it a name (letters, digits, - and _, up to 16).
+- **Load this build** swaps your tree for the saved one. Your socketed cards go back to the inventory, the whole tree is cleared and the saved nodes are taken again; saved cards are socketed again where you still own them. It costs the **swap price** (setting "Swapping to a saved build: price", 50,000 zeny by default, 0 = free), plus the normal socketing price for each card put back in.
+- **Rename** and **Delete**. Overwrite, load and delete ask you to click twice, so nothing is lost by accident.
+
+Loading goes through the same rules as clicking nodes, so a build is rebuilt safely: nodes you can no longer take (fewer points than when you saved, a keystone over the limit, another job line, a missing skill requirement) are skipped, and the chat line says how many. A build can only be loaded by a character with the same starting class, and a build saved before a tree layout change (the tree version bump) is marked red and can only be overwritten or deleted. The slot you saved or loaded last is highlighted; it is only a marker, it does not follow later changes you make to the tree.
+
 ### Active effects list
 
 A panel on the right of the window lists **everything your passives give you**, summed up: all stat, damage, resistance and skill bonuses (the same effect from many nodes is one line), the skills the tree teaches, your mastery choices and your socketed cards. Penalties are red. The **Active effects** button in the top bar shows or hides it, and the window remembers your choice.
@@ -209,6 +220,8 @@ Some notables teach a skill with a permanent grant that survives job changes: It
 | Show the PT button in game | on |
 | Most keystones a character can take (0 = no limit) | 2 |
 | Most extra item drop rate the tree can give (%) | 2 |
+| Saved builds per character (0-5) | 5 |
+| Swapping to a saved build: price (zeny) | 50000 |
 | Card sockets | on |
 | Allow MVP cards in sockets | off |
 | Socketing price (zeny) | 0 |
@@ -238,10 +251,12 @@ Press **Apply** after changing settings; the server restarts. Reload the client 
 - **Auto-cast nodes** use rAthena's `bAutoSpell` from inside the same bonus script. It is the same command cards use, but it has not been tried from a bonus script here; if a chance never fires, tell me.
 - Status-on-hit chances (`bAddEff`) only trigger on weapon attacks, not on spells.
 - The "Hard Cap" keystone (`bAbsorbDmgMaxHP2`) uses the official behaviour: a hit above the cap is cut down to it.
+- **Saved builds** are new in 1.1.0 and not yet confirmed in game. They are stored in character variables (`PT_b<slot>_...`). Loading a build is not atomic: if the server stops halfway the tree may be partly rebuilt (load the slot again).
 - A mastery counts as allocated but gives nothing until an option is picked.
 
 ## Changelog
 
+- **1.1.0** Up to 5 saved builds per character with a swap price (new settings "Saved builds per character" and "Swapping to a saved build: price").
 - **1.0.4** Release made from the final `main` (the 1.0.3 tag pointed at an earlier commit); keystone table rows checked again. No functional change.
 - **1.0.3** README brought up to date with the current values (keystones, drop rate, recast and auto-cast chances, skill boost sizes).
 - **1.0.2** Default keystone limit lowered from 3 to 2.

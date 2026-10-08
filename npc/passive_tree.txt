@@ -16,13 +16,14 @@
 //=       @passive <n> state | cards | alloc <id,id,...> | refund <id> | reset
 //=               | socket <node> <card id> | unsocket <node> | choose <node> <option>
 //=     and gets one line back:
-//=       status|message|start|points|mult|refund|ids|sockets|inventory cards|cards on|socket price|choices|job line|keystone limit|reborn|drop cap
+//=       status|message|start|points|mult|refund|ids|sockets|inventory cards|cards on|socket price|choices|job line|keystone limit|reborn|drop cap|builds|current slot|swap price
 //=     (refund is -1 when refunds are switched off; sockets is node:card,...;
 //=     the inventory list, id:amount,..., only comes with the "cards" request).
 //=     Typing @passive on its own opens the window.
 //=   - Card sockets: the card is taken from the inventory and its id kept in
 //=     PT_sc[] next to the socket node id in PT_sn[]. F_PT_Bonus runs
 //=     F_PT_Card (passive_tree_cards.txt, generated per era) for each one.
+//=   - Builds: up to 5 saved trees per character (commands bsave, bload, bdel, bname); see L_BuildSave / L_BuildLoad.
 //=   - Masteries: the chosen option of a mastery node is kept in PT_mn[] (node) and
 //=     PT_mv[] (option 1..4); F_PT_Bonus runs the entry node*10+option for it.
 //=   - Job-line nodes (.req) only allocate for that second-class line, and some
@@ -44,6 +45,9 @@ OnInit:
 	.sockzeny = callfunc("F_ModSetting", "path-of-ragnarok", "socket_zeny", 0);
 	.maxkeys = callfunc("F_ModSetting", "path-of-ragnarok", "max_keystones", 2);
 	$@PT_cards = .cards;
+	.builds = callfunc("F_ModSetting", "path-of-ragnarok", "max_builds", 5);
+	.swapzeny = callfunc("F_ModSetting", "path-of-ragnarok", "swap_zeny", 50000);
+	.builds = min(max(.builds, 0), 5);
 	$@PT_dropcap = callfunc("F_ModSetting", "path-of-ragnarok", "max_drop_bonus", 2);
 	$@PT_mvpcards = .mvpcards;
 	bindatcmd "passive", strnpcinfo(3) + "::OnQuery", 0, 99;
@@ -1125,6 +1129,41 @@ OnQuery:
 			.@msg$ = .@r$;
 		}
 		callsub L_Apply;
+	} else if (.@cmd$ == "bsave") {
+		.@slot = atoi(.@arg$);
+		.@bn$ = callsub(L_BuildName, .@atcmd_parameters$[3]);
+		if (.@slot < 1 || .@slot > .builds) {
+			.@status$ = "err";
+			.@msg$ = "Unknown slot.";
+		} else {
+			if (.@bn$ == "")
+				.@bn$ = "Build_" + .@slot;
+			callsub L_BuildSave, .@slot, .@bn$;
+			.@msg$ = "Saved the tree in slot " + .@slot + ".";
+		}
+	} else if (.@cmd$ == "bload") {
+		.@msg$ = callsub(L_BuildLoad, atoi(.@arg$));
+		if (!@pt_bok)
+			.@status$ = "err";
+		callsub L_Apply;
+	} else if (.@cmd$ == "bdel") {
+		.@slot = atoi(.@arg$);
+		if (.@slot < 1 || .@slot > .builds) {
+			.@status$ = "err";
+			.@msg$ = "Unknown slot.";
+		} else {
+			callsub L_BuildClear, .@slot;
+			.@msg$ = "Slot " + .@slot + " emptied.";
+		}
+	} else if (.@cmd$ == "bname") {
+		.@slot = atoi(.@arg$);
+		.@bn$ = callsub(L_BuildName, .@atcmd_parameters$[3]);
+		if (.@slot < 1 || .@slot > .builds || !getd("PT_b" + .@slot + "_used") || .@bn$ == "") {
+			.@status$ = "err";
+			.@msg$ = "Cannot rename that slot (empty, or the name has no usable characters).";
+		} else {
+			setd("PT_b" + .@slot + "_name$", .@bn$);
+		}
 	} else if (.@cmd$ == "choose") {
 		.@r$ = callsub(L_Choose, atoi(.@arg$), atoi(.@atcmd_parameters$[3]));
 		if (.@r$ != "") {
@@ -1543,6 +1582,146 @@ L_Choose:
 	PT_mv[.@m] = .@opt;
 	return "";
 
+// ---- saved builds (up to 5 slots per character) --------------------------------
+// A slot keeps a copy of the tree (nodes, mastery choices, socketed card ids) in permanent character variables named
+// PT_b<slot>_...: _used, _name$, _start, _ver, _nc/_n[] (nodes), _mc/_mn[]/_mv[] (masteries), _cc/_sn[]/_sc[] (cards).
+// Loading replays the nodes through L_Alloc, so every rule (connection, job line, keystone limit, points) is checked again.
+
+// Writes the current tree into slot getarg(0) under the name getarg(1).
+L_BuildSave:
+	.@s = getarg(0);
+	.@p$ = "PT_b" + .@s + "_";
+	callsub L_BuildClear, .@s;
+	.@n = getarraysize(PT_nodes);
+	for (.@i = 0; .@i < .@n; .@i++)
+		setd(.@p$ + "n[" + .@i + "]", PT_nodes[.@i]);
+	setd(.@p$ + "nc", .@n);
+	.@m = getarraysize(PT_mn);
+	for (.@i = 0; .@i < .@m; .@i++) {
+		setd(.@p$ + "mn[" + .@i + "]", PT_mn[.@i]);
+		setd(.@p$ + "mv[" + .@i + "]", PT_mv[.@i]);
+	}
+	setd(.@p$ + "mc", .@m);
+	.@c = getarraysize(PT_sc);
+	for (.@i = 0; .@i < .@c; .@i++) {
+		setd(.@p$ + "sn[" + .@i + "]", PT_sn[.@i]);
+		setd(.@p$ + "sc[" + .@i + "]", PT_sc[.@i]);
+	}
+	setd(.@p$ + "cc", .@c);
+	setd(.@p$ + "name$", getarg(1));
+	setd(.@p$ + "start", PT_start);
+	setd(.@p$ + "ver", .ver);
+	setd(.@p$ + "used", 1);
+	PT_slot = .@s;
+	return;
+
+// Empties slot getarg(0).
+L_BuildClear:
+	.@p$ = "PT_b" + getarg(0) + "_";
+	.@n = getd(.@p$ + "nc");
+	for (.@i = 0; .@i < .@n; .@i++)
+		setd(.@p$ + "n[" + .@i + "]", 0);
+	.@m = getd(.@p$ + "mc");
+	for (.@i = 0; .@i < .@m; .@i++) {
+		setd(.@p$ + "mn[" + .@i + "]", 0);
+		setd(.@p$ + "mv[" + .@i + "]", 0);
+	}
+	.@c = getd(.@p$ + "cc");
+	for (.@i = 0; .@i < .@c; .@i++) {
+		setd(.@p$ + "sn[" + .@i + "]", 0);
+		setd(.@p$ + "sc[" + .@i + "]", 0);
+	}
+	setd(.@p$ + "nc", 0);
+	setd(.@p$ + "mc", 0);
+	setd(.@p$ + "cc", 0);
+	setd(.@p$ + "name$", "");
+	setd(.@p$ + "start", 0);
+	setd(.@p$ + "ver", 0);
+	setd(.@p$ + "used", 0);
+	if (PT_slot == getarg(0))
+		PT_slot = 0;
+	return;
+
+// Swaps the current tree for slot getarg(0). Sets @pt_bok to 1 when it worked; returns the message.
+L_BuildLoad:
+	.@s = getarg(0);
+	.@p$ = "PT_b" + .@s + "_";
+	@pt_bok = 0;
+	if (.@s < 1 || .@s > .builds)
+		return "Unknown slot.";
+	if (!getd(.@p$ + "used"))
+		return "That slot is empty.";
+	if (getd(.@p$ + "ver") != .ver)
+		return "That build was saved with an older version of the tree and cannot be loaded.";
+	if (getd(.@p$ + "start") != PT_start)
+		return "That build belongs to another starting class.";
+	if (Zeny < .swapzeny)
+		return "You need " + .swapzeny + " zeny.";
+	.@c = getarraysize(PT_sc);
+	for (.@i = 0; .@i < .@c; .@i++) {
+		if (!checkweight(PT_sc[.@i], 1))
+			return "You cannot carry the socketed cards back right now.";
+	}
+	Zeny -= .swapzeny;
+	// put the current tree away: cards back to the inventory, everything cleared
+	for (.@i = 0; .@i < .@c; .@i++)
+		getitem PT_sc[.@i], 1;
+	deletearray PT_sn[0], .@c;
+	deletearray PT_sc[0], .@c;
+	deletearray PT_nodes[0], getarraysize(PT_nodes);
+	deletearray PT_mn[0], getarraysize(PT_mn);
+	deletearray PT_mv[0], getarraysize(PT_mv);
+	// replay the nodes: repeat until a whole pass allocates nothing (a node can be saved before the one it hangs off)
+	.@nc = getd(.@p$ + "nc");
+	for (.@i = 0; .@i < .@nc; .@i++) {
+		.@want[.@i] = getd(.@p$ + "n[" + .@i + "]");
+		.@done[.@i] = 0;
+	}
+	.@left = .@nc;
+	.@progress = 1;
+	while (.@progress && .@left > 0) {
+		.@progress = 0;
+		for (.@i = 0; .@i < .@nc; .@i++) {
+			if (.@done[.@i])
+				continue;
+			.@r$ = callsub(L_Alloc, .@want[.@i]);
+			if (.@r$ == "") {
+				.@done[.@i] = 1;
+				.@left--;
+				.@progress = 1;
+			}
+		}
+	}
+	.@mc = getd(.@p$ + "mc");
+	for (.@i = 0; .@i < .@mc; .@i++)
+		callsub L_Choose, getd(.@p$ + "mn[" + .@i + "]"), getd(.@p$ + "mv[" + .@i + "]");
+	.@cc = getd(.@p$ + "cc");
+	.@missing = 0;
+	for (.@i = 0; .@i < .@cc; .@i++) {
+		.@r$ = callsub(L_Socket, getd(.@p$ + "sn[" + .@i + "]"), getd(.@p$ + "sc[" + .@i + "]"));
+		if (.@r$ != "")
+			.@missing++;
+	}
+	PT_slot = .@s;
+	@pt_bok = 1;
+	.@msg$ = "Loaded " + getd(.@p$ + "name$") + ": " + (.@nc - .@left) + " of " + .@nc + " nodes.";
+	if (.@left)
+		.@msg$ += " " + .@left + " could not be taken (points, job line or keystone limit).";
+	if (.@missing)
+		.@msg$ += " " + .@missing + " card" + (.@missing > 1 ? "s" : "") + " not socketed (not in your inventory).";
+	return .@msg$;
+
+// Cleans a build name: letters, digits, - and _ only, at most 16 characters. Returns "" when nothing usable is left.
+L_BuildName:
+	.@in$ = getarg(0);
+	.@out$ = "";
+	.@allowed$ = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
+	for (.@i = 0; .@i < getstrlen(.@in$) && .@i < 16; .@i++) {
+		if (strpos(.@allowed$, charat(.@in$, .@i)) != -1)
+			.@out$ += charat(.@in$, .@i);
+	}
+	return .@out$;
+
 // One @@reply line (split into parts when long):
 // status|message|start|points|mult|refund|ids|sockets|inventory cards|cards on|socket price|choices|job line
 // getarg(3) = 1 adds the cards in the inventory that can be socketed.
@@ -1571,6 +1750,16 @@ L_Reply:
 				.@inv$ += (.@inv$ != "" ? "," : "") + .@c + ":" + @inventorylist_amount[.@i];
 		}
 	}
+	.@bs$ = "";
+	for (.@b = 1; .@b <= .builds; .@b++) {
+		.@bp$ = "PT_b" + .@b + "_";
+		if (.@b > 1)
+			.@bs$ += ",";
+		if (getd(.@bp$ + "used"))
+			.@bs$ += getd(.@bp$ + "name$") + ":" + getd(.@bp$ + "nc") + ":" + (getd(.@bp$ + "ver") == .ver ? 1 : 0);
+		else
+			.@bs$ += "-";
+	}
 	.@choice$ = "";
 	.@mm = getarraysize(PT_mn);
 	for (.@i = 0; .@i < .@mm; .@i++)
@@ -1579,7 +1768,7 @@ L_Reply:
 	if (.@m < 10)
 		.@m = 100;
 	.@r = .canrefund ? .refund : -1;
-	.@out$ = getarg(1) + "|" + getarg(2) + "|" + PT_start + "|" + min(PT_earned, .max) + "|" + .@m + "|" + .@r + "|" + .@ids$ + "|" + .@sock$ + "|" + .@inv$ + "|" + .cards + "|" + .sockzeny + "|" + .@choice$ + "|" + callsub(L_Line) + "|" + .maxkeys + "|" + callsub(L_Upper) + "|" + $@PT_dropcap;
+	.@out$ = getarg(1) + "|" + getarg(2) + "|" + PT_start + "|" + min(PT_earned, .max) + "|" + .@m + "|" + .@r + "|" + .@ids$ + "|" + .@sock$ + "|" + .@inv$ + "|" + .cards + "|" + .sockzeny + "|" + .@choice$ + "|" + callsub(L_Line) + "|" + .maxkeys + "|" + callsub(L_Upper) + "|" + $@PT_dropcap + "|" + .@bs$ + "|" + PT_slot + "|" + .swapzeny;
 	.@len = getstrlen(.@out$);
 	.@parts = (.@len + 149) / 150;
 	for (.@p = 0; .@p < .@parts; .@p++)

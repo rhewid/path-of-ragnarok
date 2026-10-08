@@ -71,6 +71,25 @@ canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: 
 .picker .card b { color: #e8ecf5; font-weight: normal; }
 .picker .card small { display: block; color: #8a93a8; white-space: normal; }
 .picker .empty { padding: 10px 9px; color: #8a93a8; }
+.slotbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 8px; background: #12161e; border-bottom: 1px solid #2a3040; }
+.slotbar[hidden], .buildbox[hidden] { display: none !important; }
+.slotbar span { color: #8a93a8; }
+.slotbar button { font: inherit; padding: 2px 9px; color: #d6d9e0; background: #232a38; border: 1px solid #3a4358; border-radius: 3px; }
+.slotbar button:hover { background: #2d364a; }
+.slotbar button.cur { border-color: #f0c860; color: #fff3c0; }
+.slotbar button.empty { color: #6b7488; }
+.slotbar button.old { border-color: #7a3a3a; }
+.buildbox { position: absolute; z-index: 8; left: 8px; top: 8px; width: 300px; background: rgba(12, 14, 20, .98); border: 1px solid #5b7a96; border-radius: 4px; }
+.buildbox header { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-bottom: 1px solid #2a3040; color: #8ec8ff; font-weight: bold; }
+.buildbox header span { flex: 1; }
+.buildbox .current { padding: 8px 9px; border-bottom: 1px solid #2a3040; }
+.buildbox .current .bad { color: #ff8a8a; margin-top: 4px; }
+.buildbox .bname { font: inherit; width: 100%; box-sizing: border-box; padding: 3px 6px; color: #e8ecf5; background: #0c0e13; border: 1px solid #3a4358; border-radius: 3px; user-select: text; }
+.buildbox .acts { display: flex; flex-direction: column; gap: 5px; padding: 8px 9px; }
+.buildbox .note { padding: 0 9px 9px; color: #8a93a8; font-size: 11px; }
+.buildbox button { font: inherit; padding: 3px 9px; color: #d6d9e0; background: #232a38; border: 1px solid #3a4358; border-radius: 3px; }
+.buildbox button:hover { background: #2d364a; }
+.buildbox button.warn { background: #6b1f1f; border-color: #e06060; color: #fff; }
 .msg { padding: 4px 8px; min-height: 16px; background: #151922; border-top: 1px solid #2a3040; color: #98a2b8; }
 .msg.err { color: #ff8a8a; }
 .launcher { position: fixed; right: 192px; top: 66px; width: 43px; height: 22px; z-index: 8999; font: bold 11px Tahoma, sans-serif; padding: 0;
@@ -90,6 +109,8 @@ export function parseReply(text) {
 		mult: Number(f[4]) || 100, refund: Number(f[5]), ids: f[6].split(',').filter(Boolean).map(Number),
 		sockets: pairs(f[7]), inv: pairs(f[8]), cardsOn: f[9] === '1', socketZeny: Number(f[10]) || 0,
 		choices: pairs(f[11]), line: Number(f[12]) || 0, keyLimit: Number(f[13]) || 0, upper: f[14] === '1', dropCap: Number(f[15]) || 0,
+		builds: (f[16] || '').split(',').filter(Boolean).map(e => { if (e === '-') return null; const [name, count, ok] = e.split(':'); return { name, count: Number(count) || 0, ok: ok === '1' }; }),
+		slot: Number(f[17]) || 0, swapZeny: Number(f[18]) || 0,
 	};
 }
 
@@ -139,7 +160,8 @@ export default function init(parameters, api) {
 				<button class="mode" title="While on, a click refunds an allocated node (right-click always does)">Refund mode</button>
 				<button class="reset">Reset all</button><button class="fit">Center</button><button class="sidebtn on" title="Show or hide the list of everything your passives give you">Active effects</button>
 			</div>
-			<div class="stage"><div class="view"><canvas></canvas><div class="results" hidden></div><div class="picker" hidden></div><div class="tip" hidden></div></div><aside class="side"></aside></div>
+			<div class="slotbar" hidden></div>
+			<div class="stage"><div class="view"><canvas></canvas><div class="results" hidden></div><div class="picker" hidden></div><div class="buildbox" hidden></div><div class="tip" hidden></div></div><aside class="side"></aside></div>
 			<div class="msg"></div>
 		</div>`;
 	const $ = sel => body.querySelector(sel);
@@ -154,7 +176,7 @@ export default function init(parameters, api) {
 	const HINT = 'Click a node to allocate it (the whole path to it). Right-click an allocated node to refund it. Drag to move, wheel to zoom.';
 
 	// ---- state ----
-	const state = { start: 0, cap: 0, mult: 100, refund: -1, alloc: new Set(), sockets: new Map(), choices: new Map(), line: 0, upper: false, dropCap: 0, keyLimit: 0, inv: [], cardsOn: false, socketZeny: 0, loaded: false };
+	const state = { start: 0, cap: 0, mult: 100, refund: -1, alloc: new Set(), sockets: new Map(), choices: new Map(), line: 0, upper: false, dropCap: 0, builds: [], slot: 0, swapZeny: 0, keyLimit: 0, inv: [], cardsOn: false, socketZeny: 0, loaded: false };
 	const lineName = () => TREE.lines[state.line] || '';
 	const view = { x: 0, y: 0, zoom: 0.4, w: 300, h: 300, dpr: 1 };
 	let hover = 0, path = [], refundMode = false, busy = false, dragging = null, resetArmed = 0;
@@ -253,6 +275,9 @@ export default function init(parameters, api) {
 		state.keyLimit = reply.keyLimit;
 		state.upper = reply.upper;
 		state.dropCap = reply.dropCap;
+		state.builds = reply.builds;
+		state.slot = reply.slot;
+		state.swapZeny = reply.swapZeny;
 		if (withInventory) state.inv = reply.inv;
 		state.loaded = true;
 		$('.pts').textContent = state.start ? `${unspent()} unspent  (${state.alloc.size} / ${state.cap} used)${state.keyLimit ? `  -  keystones ${keystonesUsed()} / ${state.keyLimit}` : ''}` : '-';
@@ -263,6 +288,7 @@ export default function init(parameters, api) {
 		if (!state.alloc.has(pickerNode)) closePicker();
 		else if (!picker.hidden) renderPicker();
 		renderSide();
+		renderSlots();
 	}
 
 	function say(text, isError) {
@@ -581,6 +607,66 @@ export default function init(parameters, api) {
 		if (opt) { await ask(`choose ${pickerNode} ${opt.dataset.opt}`); return; }
 		const row = event.target.closest('[data-card]');
 		if (row) { const node = pickerNode; if (await ask(`socket ${node} ${row.dataset.card}`)) closePicker(); }
+	});
+
+	// ---- saved builds: up to 5 slots to swap between ----
+	const slotbar = $('.slotbar');
+	const buildbox = $('.buildbox');
+	let buildSlot = 0, armed = '';
+	const pretty = name => String(name || '').replace(/_/g, ' ');
+	const wire = name => String(name || '').trim().replace(/\s+/g, '_').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 16);
+
+	function renderSlots() {
+		slotbar.hidden = !state.builds.length;
+		if (!state.builds.length) { closeBuild(); return; }
+		slotbar.innerHTML = `<span>Builds:</span>${state.builds.map((b, i) => {
+			const cls = [state.slot === i + 1 ? 'cur' : '', b ? '' : 'empty', b && !b.ok ? 'old' : ''].filter(Boolean).join(' ');
+			return `<button class="${cls}" data-slot="${i + 1}" title="${b ? `${b.count} nodes${b.ok ? '' : ' (older tree layout, cannot be loaded)'}` : 'Empty: click to save the current tree here'}">${i + 1}: ${b ? escape(pretty(b.name)) : 'empty'}${b ? ` (${b.count})` : ''}</button>`;
+		}).join('')}`;
+		if (buildSlot) renderBuild();
+	}
+	function closeBuild() { buildSlot = 0; armed = ''; buildbox.hidden = true; }
+	function openBuild(slot) { buildSlot = slot; armed = ''; buildbox.hidden = false; renderBuild(); }
+	function renderBuild() {
+		const b = state.builds[buildSlot - 1];
+		const price = state.swapZeny ? ` (${state.swapZeny.toLocaleString()} zeny)` : '';
+		const arm = (act, label) => `<button data-act="${act}"${armed === act ? ' class="warn"' : ''}>${armed === act ? 'Click again to confirm' : label}</button>`;
+		buildbox.innerHTML = `<header><span>Build slot ${buildSlot}</span><button data-act="close">Close</button></header>
+			<div class="current">${b
+				? `<b>${escape(pretty(b.name))}</b> - ${b.count} nodes${b.ok ? '' : '<div class="bad">Saved with an older version of the tree: it cannot be loaded, only overwritten or deleted.</div>'}`
+				: 'Empty. Saving copies your current tree (nodes, mastery choices and socketed cards) into this slot.'}
+				<div style="margin-top:6px"><input class="bname" maxlength="16" placeholder="Name" value="${escape(b ? b.name : `Build_${buildSlot}`).replace(/_/g, ' ')}"></div></div>
+			<div class="acts">
+				${arm('save', b ? 'Overwrite with the current tree' : 'Save the current tree here')}
+				${b && b.ok ? arm('load', `Load this build${price}`) : ''}
+				${b ? '<button data-act="rename">Rename</button>' : ''}
+				${b ? arm('del', 'Delete') : ''}
+			</div>
+			<div class="note">Loading puts your socketed cards back in the inventory, replaces the whole tree with the saved one and sockets the saved cards again where you still have them. Nodes you can no longer take are skipped.</div>`;
+	}
+	slotbar.addEventListener('click', event => {
+		const button = event.target.closest('[data-slot]');
+		if (button) { const slot = Number(button.dataset.slot); if (buildSlot === slot && !buildbox.hidden) closeBuild(); else openBuild(slot); }
+	});
+	buildbox.addEventListener('keydown', event => event.stopPropagation());
+	buildbox.addEventListener('click', async event => {
+		const act = event.target.closest('[data-act]')?.dataset.act;
+		if (!act) return;
+		if (act === 'close') return closeBuild();
+		const slot = buildSlot;
+		const name = wire(buildbox.querySelector('.bname')?.value);
+		if (act === 'rename') {
+			if (!name) return say('Type a name first (letters, digits, - and _).', true);
+			await ask(`bname ${slot} ${name}`);
+			return renderBuild();
+		}
+		const needsConfirm = (act === 'save' && state.builds[slot - 1]) || act === 'load' || act === 'del';
+		if (needsConfirm && armed !== act) { armed = act; renderBuild(); return; }
+		armed = '';
+		if (act === 'save') await ask(`bsave ${slot}${name ? ` ${name}` : ''}`);
+		else if (act === 'load') await ask(`bload ${slot}`);
+		else if (act === 'del') await ask(`bdel ${slot}`);
+		renderBuild();
 	});
 
 	// ---- hover, tooltip ----
