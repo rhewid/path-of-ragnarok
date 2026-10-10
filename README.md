@@ -4,8 +4,8 @@ A mod for [Ragnarok Offline](https://github.com/Flux159/ragnarokoffline.app) tha
 
 - Your **first class decides where you start**: your origin sits in the **centre** of the tree and the tree grows **outward** from it. The starting node is free and gives **+2 to the class's stat**.
 - **Every job level earns a passive point**, up to **50** (both numbers are settings).
-- The tree is **one web of 695 nodes**, not a grid: nodes join along rings and spokes, so you grow outward from your start in a direction you pick, and the other classes' regions are reachable too.
-- Nodes give **stats, flat and % bonuses, resistances to every element and race, damage against every element and race, skill boosts, EXP and drop rate**, plus an **ETC tab** where every character spends 5 once-only skill points on any skill of any class.
+- The tree is **one web of 713 nodes**, not a grid: nodes join along rings and spokes, so you grow outward from your start in a direction you pick, and the other classes' regions are reachable too.
+- Nodes give **stats, flat and % bonuses, resistances to every element and race, damage against every element and race, skill boosts, EXP and drop rate**, plus **10 skill points** on the outer ring that are spent on a **Skills tab** to learn any skill of any class.
 - **168 notables** (bigger nodes with two or three effects), **12 keystones** (powerful, with a price), **12 masteries** (choose one of several effects), **6 card sockets**, **24 job-line branches** (second classes), **24 rebirth branches** (High classes) and **4 teleport rifts**.
 - **Search box** at the top of the window: type a name, an effect or a skill (`double strafe`, `fire resist`, `identify`, `socket`, `keystone`...). Matches light up, the rest dims, Enter jumps to the next match.
 - **Up to 5 saved builds** per character: save your tree, try another, swap back.
@@ -203,16 +203,17 @@ On the far outer side of every region, two more branches hang off the outer ring
 
 Each start node grows a short stem with **two branches, one per second class** of that first class: Knight / Crusader, Priest / Monk, Wizard / Sage, Hunter / Bard-Dancer, Assassin / Rogue, Blacksmith / Alchemist. A branch only allocates for characters of that line (third and transcended classes count as their second class). Each has two skill nodes, a notable and a capstone, built around that job's skills.
 
-### Skill points (ETC tab)
+### Skill points (Skills tab)
 
-Nodes no longer teach skills. Instead the window has a second tab, **ETC**, next to **Passive Tree**:
+Nodes no longer teach skills. Instead:
 
-- Every character can **collect 5 skill points once** (button at the top of the tab; the number is the "Skill points on the ETC tab" setting). Collecting is a one-time action per character: the points are not refilled by refunding nodes, resetting the tree or changing job.
-- A point buys **one level** of **any skill of any class** (Heal, Teleport, Hiding, Bash, Fire Bolt, Sonic Blow ... every class from Novice to the third classes on a renewal server). The list has a class filter, a search box and a "Learned only" switch. **+1** learns the next level, **Max** spends all remaining points on that skill (up to its maximum level).
+- **Ten Skill Point nodes** (cyan, with a +) sit on a ring **outside the rest of the tree**, linked to each other. Only **four ways lead in**, at the **north, east, south and west**: a short chain from the outermost node of the tree in that direction. Allocating one costs a passive point like any node and gives **one skill point**.
+- A point stays yours once collected, even if you refund the node, so the total can never go above 10 and learned skills are never at risk.
+- The window has a second tab, **Skills**, next to **Passive Tree**. A point buys **one level** of **any skill of any class** (Heal, Teleport, Hiding, Bash, Fire Bolt, Sonic Blow ... every class from Novice to the third classes on a renewal server). The list has a class filter, a search box and a "Learned only" switch. **+1** learns the next level, **Max** spends all remaining points on that skill.
 - What you learn is **permanent** and survives job changes (it is given with `skill <id>,<lv>,3`). There is no refund.
-- A skill you already know at that level, from your class, cannot be bought again; levels you already have from your class are not charged.
-- Skills the tree used to teach from nodes in older versions (Item Appraisal, Heal, Teleport, Hiding ...) are **taken back** the first time a character logs in with this version. The nodes keep their stat bonuses and the points are still spent.
-- The skill-level nodes (Blessing, Increase AGI and the other support clusters) only work for skills the character knows, so learn the skill on the ETC tab first.
+- A skill you already know at that level cannot be bought again; levels you already have from your class are not charged.
+- Skills the tree used to teach from nodes in older versions are **taken back** the first time a character logs in with this version. The nodes keep their stat bonuses.
+- The skill-level nodes (Blessing, Increase AGI and the other support clusters) only work for skills the character knows, so learn the skill on the Skills tab first.
 
 ## Settings
 
@@ -223,7 +224,7 @@ Nodes no longer teach skills. Instead the window has a second tab, **ETC**, next
 | Refund price per node (zeny) | 10000 |
 | Allow refunds | on |
 | Bonus strength (%), scales every number on the tree including the keystone penalties (not the cards) | 100 |
-| Skill points on the ETC tab (0 = switched off) | 5 |
+| Most skill points (0-10, 0 = switched off) | 10 |
 | Show the PT button in game | on |
 | Most keystones a character can take (0 = no limit) | 2 |
 | Most extra item drop rate the tree can give (%) | 2 |
@@ -258,13 +259,13 @@ Press **Apply** after changing settings; the server restarts. Reload the client 
 - **Auto-cast nodes** use rAthena's `bAutoSpell` from inside the same bonus script. It is the same command cards use, but it has not been tried from a bonus script here; if a chance never fires, tell me.
 - Status-on-hit chances (`bAddEff`) only trigger on weapon attacks, not on spells.
 - The "Hard Cap" keystone (`bAbsorbDmgMaxHP2`) uses the official behaviour: a hit above the cap is cut down to it.
-- **Skill points** (1.2.0) are new and not yet confirmed in game: please test collecting, learning a skill of another class (it may need a relog before the skill window shows it), and Max.
+- **Skill points** (1.2.0) are new and not yet confirmed in game: please test the outer ring, collecting, learning a skill of another class (it may need a relog before the skill window shows it), and Max.
 - **Saved builds** are new in 1.1.0 and not yet confirmed in game. They are stored in character variables (`PT_b<slot>_...`). Loading a build is not atomic: if the server stops halfway the tree may be partly rebuilt (load the slot again).
 - A mastery counts as allocated but gives nothing until an option is picked.
 
 ## Changelog
 
-- **1.2.0** Nodes no longer teach skills permanently (taken back from existing characters). New **ETC tab**: 5 skill points, collectable once, learn any skill of any class. Setting "Nodes can teach skills" replaced by "Skill points on the ETC tab".
+- **1.2.0** Nodes no longer teach skills permanently (taken back from existing characters). New **Skills tab**: 10 skill points collected on four-entrance outer ring of the tree, learn any skill of any class. Setting "Nodes can teach skills" replaced by "Most skill points".
 - **1.1.0** Up to 5 saved builds per character with a swap price (new settings "Saved builds per character" and "Swapping to a saved build: price").
 - **1.0.4** Release made from the final `main` (the 1.0.3 tag pointed at an earlier commit); keystone table rows checked again. No functional change.
 - **1.0.3** README brought up to date with the current values (keystones, drop rate, recast and auto-cast chances, skill boost sizes).

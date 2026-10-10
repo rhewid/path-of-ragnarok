@@ -4,7 +4,7 @@
 // api.server.request('passive', ...) and draws the answer:
 //   status|message|start|points|mult|refund|ids|sockets|inventory cards|cards on|socket price|choices|job line|...
 //   |skill points setting|collected|spent|renewal server|learned skills (id:level,...)
-// The ETC tab spends the skill points: "sclaim" collects them once, "slearn <skill id> <level>" learns a skill of any class.
+// The Skills tab spends the skill points (collected on the tree's outer ring): "slearn <skill id> <level>" learns a skill of any class.
 
 import { TREE } from './tree-data.js';
 import { SKILLS, SKILL_GROUPS } from './skill-data.js';
@@ -15,8 +15,8 @@ for (const [a, b] of TREE.edges) { ADJ.get(a).push(b); ADJ.get(b).push(a); }
 const SECTOR_OF_START = new Map(TREE.sectors.map(s => [s.start, s]));
 const ORIGIN_COLOR = id => SECTOR_OF_START.get(id)?.color || '#d8d8d8';
 const ORIGIN_LETTER = id => (SECTOR_OF_START.get(id)?.name || 'Wanderer')[0];
-const KIND = { o: 'Origin', s: 'Passive', n: 'Notable Passive', k: 'Keystone', j: 'Card Socket', m: 'Mastery (choose one)', p: 'Teleport' };
-const RADIUS = { o: 15, s: 6, n: 10, k: 15, j: 11, m: 12, p: 12 };
+const KIND = { o: 'Origin', s: 'Passive', n: 'Notable Passive', k: 'Keystone', j: 'Card Socket', m: 'Mastery (choose one)', p: 'Teleport', q: 'Skill Point' };
+const RADIUS = { o: 15, s: 6, n: 10, k: 15, j: 11, m: 12, p: 12, q: 13 };
 
 const STYLE = `
 /* the game's own cursor, not the system one (the game hides the native cursor inside every component the same way) */
@@ -164,6 +164,7 @@ function searchText(node) {
 	if (node.t === 'o') parts.push('origin start class', SECTOR_OF_START.get(node.id)?.name || 'wanderer');
 	if (node.t === 'j') parts.push('socket jewel card slot');
 	if (node.t === 'p') parts.push('teleport portal rift gate');
+	if (node.t === 'q') parts.push('skill point skills learn');
 	let text = parts.join(' | ').toLowerCase();
 	// names players use for the same thing
 	if (text.includes('item appraisal')) text += ' identify';
@@ -184,7 +185,7 @@ export default function init(parameters, api) {
 	body.style.cssText = 'width:100%;height:100%;overflow:hidden';
 	body.innerHTML = `<style>${STYLE}</style>
 		<div class="pt">
-			<div class="tabs"><button class="on" data-tab="tree">Passive Tree</button><button data-tab="etc" title="Skill points: learn any skill of any class">ETC</button></div>
+			<div class="tabs"><button class="on" data-tab="tree">Passive Tree</button><button data-tab="etc" title="Spend skill points: learn any skill of any class">Skills</button></div>
 			<div class="treepane">
 			<div class="bar">
 				<span>Passive points: <b class="pts">-</b></span><span class="origin"></span>
@@ -434,10 +435,11 @@ export default function init(parameters, api) {
 		if (node.t === 'j') stroke = '#a070d0';
 		if (node.t === 'm') stroke = '#3fc0a0';
 		if (node.t === 'p') stroke = '#8fb8ff';
+		if (node.t === 'q') stroke = '#4fd6e8';
 		const chosen = node.t === 'm' && state.choices.has(node.id);
 		const locked = node.req && (node.req !== lineName() || (node.up && !state.upper));
 		if (locked && !isOwned) stroke = '#7a3a3a';
-		if (isOwned) { fill = node.t === 'o' ? ORIGIN_COLOR(node.id) : node.t === 'j' ? (filled ? '#8d5fd0' : '#2a2140') : node.t === 'm' ? (chosen ? '#2f9c82' : '#1c3a33') : '#e8c05a'; stroke = '#fff0b8'; }
+		if (isOwned) { fill = node.t === 'o' ? ORIGIN_COLOR(node.id) : node.t === 'j' ? (filled ? '#8d5fd0' : '#2a2140') : node.t === 'm' ? (chosen ? '#2f9c82' : '#1c3a33') : node.t === 'q' ? '#4fd6e8' : '#e8c05a'; stroke = '#fff0b8'; }
 		else if (inPath) { fill = afford ? '#2b6f93' : '#7a2b2b'; stroke = afford ? '#6fd0ff' : '#e06060'; }
 		else if (reachable && state.start) stroke = '#6fb4ff';
 		ctx.globalAlpha = dim ? 0.25 : 1;
@@ -461,6 +463,17 @@ export default function init(parameters, api) {
 			nodePath('m', x, y, r * 0.62);
 			ctx.stroke();
 			if (chosen) { nodePath('m', x, y, r * 0.3); ctx.fillStyle = '#d8fff4'; ctx.fill(); }
+		}
+		if (node.t === 'q') {
+			ctx.lineWidth = 1.6;
+			ctx.strokeStyle = isOwned ? '#0c3a44' : '#4fd6e8';
+			nodePath('q', x, y, r * 0.55);
+			ctx.stroke();
+			ctx.fillStyle = isOwned ? '#0c3a44' : '#4fd6e8';
+			ctx.font = `bold ${Math.round(12 * z)}px Tahoma, sans-serif`;
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText('+', x, y + 1);
 		}
 		if (node.t === 'p') {
 			ctx.lineWidth = 1.6;
@@ -504,7 +517,7 @@ export default function init(parameters, api) {
 		}
 		ctx.globalAlpha = dim ? 0.25 : 1;
 		// keystone, socket and notable names are readable once zoomed in
-		if ((node.t === 'k' || node.t === 'j' || node.t === 'm' || (node.t === 'n' && view.zoom > 0.9)) && view.zoom > 0.42) {
+		if ((node.t === 'k' || node.t === 'j' || node.t === 'm' || node.t === 'q' || (node.t === 'n' && view.zoom > 0.9)) && view.zoom > 0.42) {
 			ctx.fillStyle = isOwned ? '#f0c860' : '#8a93a8';
 			ctx.font = `${Math.round(11 * Math.min(1.3, view.zoom * 1.3))}px Tahoma, sans-serif`;
 			ctx.textAlign = 'center';
@@ -546,7 +559,7 @@ export default function init(parameters, api) {
 	function fit() {
 		view.x = 0;
 		view.y = 0;
-		view.zoom = Math.max(0.2, Math.min(1.2, Math.min(view.w, view.h) / 2700));
+		view.zoom = Math.max(0.2, Math.min(1.2, Math.min(view.w, view.h) / 3100));
 		draw();
 	}
 	function focus(id) {
@@ -710,7 +723,7 @@ export default function init(parameters, api) {
 		renderBuild();
 	});
 
-	// ---- the ETC tab: skill points, learn any skill of any class ----
+	// ---- the Skills tab: spend skill points, learn any skill of any class ----
 	const etcPane = $('.etcpane');
 	let tab = 'tree';
 	const etcFilter = { group: -1, text: '', learned: false };
@@ -723,13 +736,12 @@ export default function init(parameters, api) {
 	function renderEtcHead() {
 		const head = etcPane.querySelector('.etchead');
 		if (!head) return;
-		const off = state.loaded && state.skillSetting < 1 && !state.skillCollected;
+		const off = state.loaded && state.skillSetting < 1;
 		let html;
 		if (!state.loaded) html = '<span class="none">Asking the server...</span>';
 		else if (!state.start) html = '<span>Choose a first class to wake the tree.</span>';
 		else if (off) html = '<span>Skill points are switched off on this server.</span>';
-		else if (!state.skillCollected) html = `<span><b class="big">${state.skillSetting}</b> skill points are waiting for you. They can be collected once.</span><button class="go" data-act="claim">Collect ${state.skillSetting} skill points</button>`;
-		else html = `<span>Skill points: <b class="big">${skillsLeft()}</b> left <small>(${state.skillCollected} collected, ${state.skillSpent} spent)</small></span>`;
+		else html = `<span>Skill points: <b class="big">${skillsLeft()}</b> left <small>(${state.skillCollected} of ${state.skillSetting} collected, ${state.skillSpent} spent)</small></span>${state.skillCollected < state.skillSetting ? '<small>Collect more on the outer ring of the passive tree: the cyan + nodes, reached from the north, east, south or west.</small>' : ''}`;
 		head.innerHTML = html;
 	}
 	function renderEtcList() {
@@ -765,7 +777,7 @@ export default function init(parameters, api) {
 		if (!etcPane.querySelector('.skills')) {
 			const groups = SKILL_GROUPS.map((g, i) => [i, g]).filter(([, g]) => state.renewal || !g.re);
 			etcPane.innerHTML = `<div class="etchead"></div>
-				<div class="etcnote">Learn any skill of any class: each level costs one point. The points can only be collected once and what you learn is permanent. Skills you already have at that level cannot be bought again.</div>
+				<div class="etcnote">Learn any skill of any class: each level costs one point. Skill points are the cyan + nodes on the outer ring of the passive tree; a point stays yours once collected, and what you learn is permanent. Skills you already have at that level cannot be bought again.</div>
 				<div class="etcbar"><select class="sgroup"><option value="-1">All classes</option>${groups.map(([i, g]) => `<option value="${i}">${escape(g.n)}</option>`).join('')}</select>
 					<input class="search ssearch" placeholder="Search skills..." autocomplete="off" spellcheck="false" value="${escape(etcFilter.text)}">
 					<label><input type="checkbox" class="sknown"${etcFilter.learned ? ' checked' : ''}> Learned only</label></div>
@@ -797,7 +809,6 @@ export default function init(parameters, api) {
 		else if (event.target.matches('.sknown')) { etcFilter.learned = event.target.checked; renderEtcList(); }
 	});
 	etcPane.addEventListener('click', async event => {
-		if (event.target.closest('[data-act="claim"]')) { await ask('sclaim'); return; }
 		const learn = event.target.closest('[data-learn]');
 		if (learn && !learn.disabled) await ask(`slearn ${learn.dataset.learn} ${learn.dataset.to}`);
 	});

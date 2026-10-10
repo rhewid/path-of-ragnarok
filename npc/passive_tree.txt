@@ -10,8 +10,10 @@
 //=     F_PT_Bonus on every stat recalculation. F_PT_Bonus reads PT_nodes[]
 //=     and runs the bonus line of each node, so nothing has to be cleared
 //=     (bonus_script_clear can only wipe every script of the player).
-//=   - Skill points (setting skill_points, 5 by default): the character collects them once (PT_spc, 0 = not yet
-//=     collected) and spends them on the ETC tab of the window to learn any skill of any class, one point per level.
+//=   - Skill points: ten nodes on the outer ring of the tree (.skp) give one skill point each (setting skill_points caps
+//=     the total, 10 by default). PT_spc keeps the highest number of them the character ever held, so refunding a node
+//=     never takes a point away. They are spent on the Skills tab of the window to learn any skill of any class, one
+//=     point per level.
 //=     What was learned is kept in PT_ls[] (skill id), PT_ll[] (level) and PT_sps (points spent); L_Skills gives it
 //=     with skill <id>,<lv>,3 (permanent, survives job changes). The list of skills a server knows is
 //=     passive_tree_skills.txt ($@PT_skok[id] = max level). PT_gs[] only remains to take back the skills that older
@@ -19,7 +21,7 @@
 //=   - The client window (client/index.js) talks to this script through
 //=       @passive <n> state | cards | alloc <id,id,...> | refund <id> | reset
 //=               | socket <node> <card id> | unsocket <node> | choose <node> <option>
-//=               | sclaim | slearn <skill id> <level>
+//=               | slearn <skill id> <level>
 //=     and gets one line back:
 //=       status|message|start|points|mult|refund|ids|sockets|inventory cards|cards on|socket price|choices|job line|keystone limit|reborn|drop cap|builds|current slot|swap price|skill points setting|collected|spent|renewal|learned
 //=     (refund is -1 when refunds are switched off; sockets is node:card,...;
@@ -43,7 +45,7 @@ OnInit:
 	.ppl = callfunc("F_ModSetting", "path-of-ragnarok", "points_per_level", 1);
 	.refund = callfunc("F_ModSetting", "path-of-ragnarok", "refund_zeny", 10000);
 	.canrefund = callfunc("F_ModSetting", "path-of-ragnarok", "allow_refund", 1);
-	.sp = callfunc("F_ModSetting", "path-of-ragnarok", "skill_points", 5);
+	.sp = min(max(callfunc("F_ModSetting", "path-of-ragnarok", "skill_points", 10), 0), 10);
 	$@PT_mult = callfunc("F_ModSetting", "path-of-ragnarok", "value_mult", 100);
 	.cards = callfunc("F_ModSetting", "path-of-ragnarok", "allow_cards", 1);
 	.mvpcards = callfunc("F_ModSetting", "path-of-ragnarok", "mvp_cards", 0);
@@ -56,7 +58,7 @@ OnInit:
 	$@PT_dropcap = callfunc("F_ModSetting", "path-of-ragnarok", "max_drop_bonus", 2);
 	$@PT_mvpcards = .mvpcards;
 	bindatcmd "passive", strnpcinfo(3) + "::OnQuery", 0, 99;
-	.N = 695;
+	.N = 713;
 	.ver = 4;
 	.adj$[1] = "36,37,195";
 	.adj$[2] = "67,68,197";
@@ -813,7 +815,7 @@ OnInit:
 	.adj$[610] = "609";
 	.adj$[611] = "388,612";
 	.adj$[612] = "611,613";
-	.adj$[613] = "612";
+	.adj$[613] = "612,708";
 	.adj$[614] = "391,615";
 	.adj$[615] = "614,616";
 	.adj$[616] = "615";
@@ -831,7 +833,7 @@ OnInit:
 	.adj$[628] = "627";
 	.adj$[629] = "439,630";
 	.adj$[630] = "629,631";
-	.adj$[631] = "630";
+	.adj$[631] = "630,712";
 	.adj$[632] = "442,633";
 	.adj$[633] = "632,634";
 	.adj$[634] = "633";
@@ -850,7 +852,7 @@ OnInit:
 	.req[640] = 257;
 	.reqn$[640] = "Lord Knight";
 	.requp[640] = 1;
-	.adj$[641] = "640";
+	.adj$[641] = "640,706";
 	.req[641] = 257;
 	.reqn$[641] = "Lord Knight";
 	.requp[641] = 1;
@@ -946,7 +948,7 @@ OnInit:
 	.req[664] = 259;
 	.reqn$[664] = "Sniper";
 	.requp[664] = 1;
-	.adj$[665] = "664";
+	.adj$[665] = "664,710";
 	.req[665] = 259;
 	.reqn$[665] = "Sniper";
 	.requp[665] = 1;
@@ -1040,6 +1042,34 @@ OnInit:
 	.adj$[693] = "423,424,461";
 	.adj$[694] = "440,441,462";
 	.adj$[695] = "356,457,463";
+	.adj$[696] = "697,705,707";
+	.skp[696] = 1;
+	.adj$[697] = "696,698";
+	.skp[697] = 1;
+	.adj$[698] = "697,699";
+	.skp[698] = 1;
+	.adj$[699] = "698,700,709";
+	.skp[699] = 1;
+	.adj$[700] = "699,701";
+	.skp[700] = 1;
+	.adj$[701] = "700,702,711";
+	.skp[701] = 1;
+	.adj$[702] = "701,703";
+	.skp[702] = 1;
+	.adj$[703] = "702,704";
+	.skp[703] = 1;
+	.adj$[704] = "703,705,713";
+	.skp[704] = 1;
+	.adj$[705] = "696,704";
+	.skp[705] = 1;
+	.adj$[706] = "641,707";
+	.adj$[707] = "696,706";
+	.adj$[708] = "613,709";
+	.adj$[709] = "699,708";
+	.adj$[710] = "665,711";
+	.adj$[711] = "701,710";
+	.adj$[712] = "631,713";
+	.adj$[713] = "704,712";
 	end;
 
 OnPCLoginEvent:
@@ -1149,14 +1179,6 @@ OnQuery:
 		} else {
 			setd("PT_b" + .@slot + "_name$", .@bn$);
 		}
-	} else if (.@cmd$ == "sclaim") {
-		.@r$ = callsub(L_SkillClaim);
-		if (.@r$ != "") {
-			.@status$ = "err";
-			.@msg$ = .@r$;
-		} else
-			.@msg$ = "You collected " + PT_spc + " skill points.";
-		callsub L_Apply;
 	} else if (.@cmd$ == "slearn") {
 		.@r$ = callsub(L_SkillLearn, atoi(.@arg$), atoi(.@atcmd_parameters$[3]));
 		if (.@r$ != "") {
@@ -1290,6 +1312,14 @@ L_Skills:
 	for (.@i = 0; .@i < .@g; .@i++)
 		skill PT_gs[.@i], 0, 3;
 	deletearray PT_gs[0], .@g;
+	.@c = 0;
+	.@n = getarraysize(PT_nodes);
+	for (.@i = 0; .@i < .@n; .@i++) {
+		if (.skp[PT_nodes[.@i]])
+			.@c++;
+	}
+	if (.@c > PT_spc)
+		PT_spc = .@c;
 	.@n = getarraysize(PT_ls);
 	for (.@i = 0; .@i < .@n; .@i++) {
 		if (getskilllv(PT_ls[.@i]) < PT_ll[.@i])
@@ -1297,23 +1327,15 @@ L_Skills:
 	}
 	return;
 
-// Collects the skill points. Only once per character.
-L_SkillClaim:
-	if (.sp < 1)
-		return "Skill points are switched off.";
-	if (PT_spc)
-		return "You already collected your skill points.";
-	PT_spc = .sp;
-	return "";
-
 // Learns skill getarg(0) up to level getarg(1) for one point per level. Returns "" or the reason it was refused.
 L_SkillLearn:
 	.@id = getarg(0);
 	.@lv = getarg(1);
 	if (.sp < 1)
 		return "Skill points are switched off.";
-	if (!PT_spc)
-		return "Collect your skill points first.";
+	.@total = min(PT_spc, .sp);
+	if (.@total < 1)
+		return "Collect skill points on the outer ring of the tree first.";
 	.@max = $@PT_skok[.@id];
 	if (.@max < 1)
 		return "That skill cannot be learned here.";
@@ -1323,7 +1345,7 @@ L_SkillLearn:
 	if (.@have >= .@lv)
 		return "You already know that skill at level " + .@have + ".";
 	.@cost = .@lv - .@have;
-	.@left = PT_spc - PT_sps;
+	.@left = .@total - PT_sps;
 	if (.@left < .@cost)
 		return "That needs " + .@cost + " skill point" + (.@cost > 1 ? "s" : "") + " and you have " + .@left + ".";
 	.@at = -1;
@@ -1779,7 +1801,7 @@ L_Reply:
 	if (.@m < 10)
 		.@m = 100;
 	.@r = .canrefund ? .refund : -1;
-	.@out$ = getarg(1) + "|" + getarg(2) + "|" + PT_start + "|" + min(PT_earned, .max) + "|" + .@m + "|" + .@r + "|" + .@ids$ + "|" + .@sock$ + "|" + .@inv$ + "|" + .cards + "|" + .sockzeny + "|" + .@choice$ + "|" + callsub(L_Line) + "|" + .maxkeys + "|" + callsub(L_Upper) + "|" + $@PT_dropcap + "|" + .@bs$ + "|" + PT_slot + "|" + .swapzeny + "|" + .sp + "|" + PT_spc + "|" + PT_sps + "|" + $@PT_re + "|" + .@learned$;
+	.@out$ = getarg(1) + "|" + getarg(2) + "|" + PT_start + "|" + min(PT_earned, .max) + "|" + .@m + "|" + .@r + "|" + .@ids$ + "|" + .@sock$ + "|" + .@inv$ + "|" + .cards + "|" + .sockzeny + "|" + .@choice$ + "|" + callsub(L_Line) + "|" + .maxkeys + "|" + callsub(L_Upper) + "|" + $@PT_dropcap + "|" + .@bs$ + "|" + PT_slot + "|" + .swapzeny + "|" + .sp + "|" + min(PT_spc, .sp) + "|" + PT_sps + "|" + $@PT_re + "|" + .@learned$;
 	.@len = getstrlen(.@out$);
 	.@parts = (.@len + 149) / 150;
 	for (.@p = 0; .@p < .@parts; .@p++)
@@ -1815,10 +1837,10 @@ function	script	F_PT_Bonus	{
 			.@id = PT_nodes[.@i];
 		else
 			.@id = PT_mn[.@i - .@n] * 10 + PT_mv[.@i - .@n];
-		if (.@id <= 366) {
-			if (.@id <= 179) {
-				if (.@id <= 89) {
-					if (.@id <= 44) {
+		if (.@id <= 371) {
+			if (.@id <= 181) {
+				if (.@id <= 90) {
+					if (.@id <= 45) {
 						if (.@id <= 22) {
 							if (.@id <= 11) {
 								if (.@id <= 5) {
@@ -1937,208 +1959,210 @@ function	script	F_PT_Bonus	{
 									}
 								}
 							} else {
-								if (.@id <= 38) {
-									if (.@id <= 35) {
+								if (.@id <= 39) {
+									if (.@id <= 36) {
 										if (.@id == 34) {	// Max HP
 											bonus bMaxHPrate,max(1,(.@m*2+50)/100);
 										} else if (.@id == 35) {	// Strength
 											bonus bStr,max(1,(.@m*2+50)/100);
-										}
-									} else {
-										if (.@id == 36) {	// Warlord's Might
+										} else if (.@id == 36) {	// Warlord's Might
 											bonus bStr,max(1,(.@m*4+50)/100);
 											bonus bVit,max(1,(.@m*2+50)/100);
 											bonus2 bAddRace,RC_All,max(1,(.@m*5+50)/100);
-										} else if (.@id == 37) {	// Bloodied, Unbowed
+										}
+									} else {
+										if (.@id == 37) {	// Bloodied, Unbowed
 											bonus bMaxHPrate,max(1,(.@m*6+50)/100);
 											bonus bHPGainValue,max(1,(.@m*8+50)/100);
 										} else if (.@id == 38) {	// HP Recovery
 											bonus bHPrecovRate,max(1,(.@m*8+50)/100);
+										} else if (.@id == 39) {	// Max HP
+											bonus bMaxHPrate,max(1,(.@m*1+50)/100);
 										}
 									}
 								} else {
-									if (.@id <= 41) {
-										if (.@id == 39) {	// Max HP
-											bonus bMaxHPrate,max(1,(.@m*1+50)/100);
-										} else if (.@id == 40) {	// Potion Efficiency
+									if (.@id <= 42) {
+										if (.@id == 40) {	// Potion Efficiency
 											bonus bAddItemHealRate,max(1,(.@m*3+50)/100);
 										} else if (.@id == 41) {	// Lay on Hands
 											bonus bHealPower,max(1,(.@m*8+50)/100);
 											bonus bVit,max(1,(.@m*2+50)/100);
+										} else if (.@id == 42) {	// Undead Ward
+											bonus2 bSubRace,RC_Undead,max(1,(.@m*1+50)/100);
 										}
 									} else {
-										if (.@id == 42) {	// Undead Ward
-											bonus2 bSubRace,RC_Undead,max(1,(.@m*1+50)/100);
-										} else if (.@id == 43) {	// Vitality
+										if (.@id == 43) {	// Vitality
 											bonus bVit,max(1,(.@m*1+50)/100);
 										} else if (.@id == 44) {	// Max HP
 											bonus bMaxHPrate,max(1,(.@m*1+50)/100);
+										} else if (.@id == 45) {	// Magic Defense
+											bonus bMdef,max(1,(.@m*1+50)/100);
 										}
 									}
 								}
 							}
 						}
 					} else {
-						if (.@id <= 66) {
-							if (.@id <= 55) {
-								if (.@id <= 49) {
-									if (.@id <= 46) {
-										if (.@id == 45) {	// Magic Defense
-											bonus bMdef,max(1,(.@m*1+50)/100);
-										} else if (.@id == 46) {	// Healing Power
+						if (.@id <= 67) {
+							if (.@id <= 56) {
+								if (.@id <= 50) {
+									if (.@id <= 47) {
+										if (.@id == 46) {	// Healing Power
 											bonus bHealPower,max(1,(.@m*2+50)/100);
-										}
-									} else {
-										if (.@id == 47) {	// Pious Shield
+										} else if (.@id == 47) {	// Pious Shield
 											bonus bMdef,max(1,(.@m*4+50)/100);
 											bonus bMaxHPrate,max(1,(.@m*3+50)/100);
-										} else if (.@id == 48) {	// Potion Efficiency
+										}
+									} else {
+										if (.@id == 48) {	// Potion Efficiency
 											bonus bAddItemHealRate,max(1,(.@m*3+50)/100);
 										} else if (.@id == 49) {	// Healing Power
 											bonus bHealPower,max(1,(.@m*2+50)/100);
+										} else if (.@id == 50) {	// Defense
+											bonus bDef,max(1,(.@m*2+50)/100);
 										}
 									}
 								} else {
-									if (.@id <= 52) {
-										if (.@id == 50) {	// Defense
-											bonus bDef,max(1,(.@m*2+50)/100);
-										} else if (.@id == 51) {	// Magic Defense
+									if (.@id <= 53) {
+										if (.@id == 51) {	// Magic Defense
 											bonus bMdef,max(1,(.@m*2+50)/100);
 										} else if (.@id == 52) {	// Blessed Warding
 											bonus2 bSubRace,RC_Undead,max(1,(.@m*6+50)/100);
 											bonus2 bSubRace,RC_Demon,max(1,(.@m*6+50)/100);
+										} else if (.@id == 53) {	// Max SP
+											bonus bMaxSPrate,max(1,(.@m*1+50)/100);
 										}
 									} else {
-										if (.@id == 53) {	// Max SP
-											bonus bMaxSPrate,max(1,(.@m*1+50)/100);
-										} else if (.@id == 54) {	// Potion Efficiency
+										if (.@id == 54) {	// Potion Efficiency
 											bonus bAddItemHealRate,max(1,(.@m*4+50)/100);
 										} else if (.@id == 55) {	// Stun Ward
 											bonus2 bResEff,Eff_Stun,max(1,(.@m*300+50)/100);
+										} else if (.@id == 56) {	// Healer's Touch
+											bonus bHealPower,max(1,(.@m*10+50)/100);
+											bonus bHealPower2,max(1,(.@m*8+50)/100);
 										}
 									}
 								}
 							} else {
-								if (.@id <= 60) {
-									if (.@id <= 57) {
-										if (.@id == 56) {	// Healer's Touch
-											bonus bHealPower,max(1,(.@m*10+50)/100);
-											bonus bHealPower2,max(1,(.@m*8+50)/100);
-										} else if (.@id == 57) {	// Vitality
+								if (.@id <= 61) {
+									if (.@id <= 58) {
+										if (.@id == 57) {	// Vitality
 											bonus bVit,max(1,(.@m*1+50)/100);
+										} else if (.@id == 58) {	// Max SP
+											bonus bMaxSPrate,max(1,(.@m*1+50)/100);
 										}
 									} else {
-										if (.@id == 58) {	// Max SP
-											bonus bMaxSPrate,max(1,(.@m*1+50)/100);
-										} else if (.@id == 59) {	// Max HP
+										if (.@id == 59) {	// Max HP
 											bonus bMaxHP,max(1,(.@m*100+50)/100);
 										} else if (.@id == 60) {	// Cleansing Light
 											bonus2 bResEff,Eff_Curse,max(1,(.@m*2000+50)/100);
 											bonus2 bResEff,Eff_Silence,max(1,(.@m*2000+50)/100);
+										} else if (.@id == 61) {	// Vitality
+											bonus bVit,max(1,(.@m*2+50)/100);
 										}
 									}
 								} else {
-									if (.@id <= 63) {
-										if (.@id == 61) {	// Vitality
-											bonus bVit,max(1,(.@m*2+50)/100);
-										} else if (.@id == 62) {	// Max HP
+									if (.@id <= 64) {
+										if (.@id == 62) {	// Max HP
 											bonus bMaxHPrate,max(1,(.@m*2+50)/100);
 										} else if (.@id == 63) {	// Magic Defense
 											bonus bMdef,max(1,(.@m*3+50)/100);
-										}
-									} else {
-										if (.@id == 64) {	// Angelic Boons
+										} else if (.@id == 64) {	// Angelic Boons
 											bonus bMaxSPrate,max(1,(.@m*4+50)/100);
 											bonus bAddItemSPHealRate,max(1,(.@m*8+50)/100);
-										} else if (.@id == 65) {	// Max SP
+										}
+									} else {
+										if (.@id == 65) {	// Max SP
 											bonus bMaxSP,max(1,(.@m*18+50)/100);
 										} else if (.@id == 66) {	// HP Recovery
 											bonus bHPrecovRate,max(1,(.@m*8+50)/100);
+										} else if (.@id == 67) {	// Martyr's Resolve
+											bonus bMaxHPrate,max(1,(.@m*6+50)/100);
+											bonus2 bSubRace,RC_All,max(1,(.@m*4+50)/100);
 										}
 									}
 								}
 							}
 						} else {
-							if (.@id <= 77) {
-								if (.@id <= 71) {
-									if (.@id <= 68) {
-										if (.@id == 67) {	// Martyr's Resolve
-											bonus bMaxHPrate,max(1,(.@m*6+50)/100);
-											bonus2 bSubRace,RC_All,max(1,(.@m*4+50)/100);
-										} else if (.@id == 68) {	// Sanctuary Keeper
+							if (.@id <= 78) {
+								if (.@id <= 72) {
+									if (.@id <= 69) {
+										if (.@id == 68) {	// Sanctuary Keeper
 											bonus bHealPower,max(1,(.@m*12+50)/100);
 											bonus bHPrecovRate,max(1,(.@m*12+50)/100);
 											bonus bAddItemHealRate,max(1,(.@m*10+50)/100);
+										} else if (.@id == 69) {	// Magic Defense
+											bonus bMdef,max(1,(.@m*4+50)/100);
 										}
 									} else {
-										if (.@id == 69) {	// Magic Defense
-											bonus bMdef,max(1,(.@m*4+50)/100);
-										} else if (.@id == 70) {	// Max SP
+										if (.@id == 70) {	// Max SP
 											bonus bMaxSP,max(1,(.@m*8+50)/100);
 										} else if (.@id == 71) {	// SP Recovery
 											bonus bSPrecovRate,max(1,(.@m*3+50)/100);
+										} else if (.@id == 72) {	// Arcane Studies
+											bonus bInt,max(1,(.@m*3+50)/100);
+											bonus bMatk,max(1,(.@m*8+50)/100);
 										}
 									}
 								} else {
-									if (.@id <= 74) {
-										if (.@id == 72) {	// Arcane Studies
-											bonus bInt,max(1,(.@m*3+50)/100);
-											bonus bMatk,max(1,(.@m*8+50)/100);
-										} else if (.@id == 73) {	// SP Cost
+									if (.@id <= 75) {
+										if (.@id == 73) {	// SP Cost
 											bonus bUseSPrate,min(-1,(.@m*(-1)-50)/100);
 										} else if (.@id == 74) {	// Intelligence
 											bonus bInt,max(1,(.@m*1+50)/100);
+										} else if (.@id == 75) {	// Max SP
+											bonus bMaxSP,max(1,(.@m*8+50)/100);
 										}
 									} else {
-										if (.@id == 75) {	// Max SP
-											bonus bMaxSP,max(1,(.@m*8+50)/100);
-										} else if (.@id == 76) {	// Magic Attack
+										if (.@id == 76) {	// Magic Attack
 											bonus bMatkRate,max(1,(.@m*1+50)/100);
 										} else if (.@id == 77) {	// Magic Attack
 											bonus bMatk,max(1,(.@m*3+50)/100);
+										} else if (.@id == 78) {	// Mana Well
+											bonus bMaxSP,max(1,(.@m*40+50)/100);
+											bonus bSPrecovRate,max(1,(.@m*8+50)/100);
 										}
 									}
 								}
 							} else {
-								if (.@id <= 83) {
-									if (.@id <= 80) {
-										if (.@id == 78) {	// Mana Well
-											bonus bMaxSP,max(1,(.@m*40+50)/100);
-											bonus bSPrecovRate,max(1,(.@m*8+50)/100);
-										} else if (.@id == 79) {	// SP Recovery
+								if (.@id <= 84) {
+									if (.@id <= 81) {
+										if (.@id == 79) {	// SP Recovery
 											bonus bSPrecovRate,max(1,(.@m*3+50)/100);
 										} else if (.@id == 80) {	// Cast Time
 											bonus bCastrate,min(-1,(.@m*(-1)-50)/100);
+										} else if (.@id == 81) {	// Max SP
+											bonus bMaxSPrate,max(1,(.@m*1+50)/100);
 										}
 									} else {
-										if (.@id == 81) {	// Max SP
-											bonus bMaxSPrate,max(1,(.@m*1+50)/100);
-										} else if (.@id == 82) {	// Magic Attack
+										if (.@id == 82) {	// Magic Attack
 											bonus bMatkRate,max(1,(.@m*1+50)/100);
 										} else if (.@id == 83) {	// Focused Mind
 											bonus bCastrate,min(-1,(.@m*(-5)-50)/100);
 											bonus bMatkRate,max(1,(.@m*3+50)/100);
+										} else if (.@id == 84) {	// Cast Time
+											bonus bCastrate,min(-1,(.@m*(-1)-50)/100);
 										}
 									}
 								} else {
-									if (.@id <= 86) {
-										if (.@id == 84) {	// Cast Time
-											bonus bCastrate,min(-1,(.@m*(-1)-50)/100);
-										} else if (.@id == 85) {	// SP Recovery
+									if (.@id <= 87) {
+										if (.@id == 85) {	// SP Recovery
 											bonus bSPrecovRate,max(1,(.@m*4+50)/100);
 										} else if (.@id == 86) {	// Magic Damage
 											bonus2 bMagicAddRace,RC_All,max(1,(.@m*1+50)/100);
-										}
-									} else {
-										if (.@id == 87) {	// Elemental Affinity
+										} else if (.@id == 87) {	// Elemental Affinity
 											bonus2 bMagicAtkEle,Ele_Fire,max(1,(.@m*6+50)/100);
 											bonus2 bMagicAtkEle,Ele_Water,max(1,(.@m*6+50)/100);
 											bonus2 bMagicAtkEle,Ele_Wind,max(1,(.@m*6+50)/100);
 											bonus2 bMagicAtkEle,Ele_Earth,max(1,(.@m*6+50)/100);
-										} else if (.@id == 88) {	// Intelligence
+										}
+									} else {
+										if (.@id == 88) {	// Intelligence
 											bonus bInt,max(1,(.@m*1+50)/100);
 										} else if (.@id == 89) {	// Dexterity
 											bonus bDex,max(1,(.@m*1+50)/100);
+										} else if (.@id == 90) {	// Healing Power
+											bonus bHealPower,max(1,(.@m*4+50)/100);
 										}
 									}
 								}
@@ -2146,330 +2170,333 @@ function	script	F_PT_Bonus	{
 						}
 					}
 				} else {
-					if (.@id <= 134) {
-						if (.@id <= 111) {
-							if (.@id <= 100) {
-								if (.@id <= 94) {
-									if (.@id <= 91) {
-										if (.@id == 90) {	// Healing Power
-											bonus bHealPower,max(1,(.@m*4+50)/100);
-										} else if (.@id == 91) {	// Mind Over Matter
+					if (.@id <= 135) {
+						if (.@id <= 112) {
+							if (.@id <= 101) {
+								if (.@id <= 95) {
+									if (.@id <= 92) {
+										if (.@id == 91) {	// Mind Over Matter
 											bonus bMaxSPrate,max(1,(.@m*5+50)/100);
 											bonus bUseSPrate,min(-1,(.@m*(-5)-50)/100);
+										} else if (.@id == 92) {	// Intelligence
+											bonus bInt,max(1,(.@m*2+50)/100);
 										}
 									} else {
-										if (.@id == 92) {	// Intelligence
-											bonus bInt,max(1,(.@m*2+50)/100);
-										} else if (.@id == 93) {	// Max SP
+										if (.@id == 93) {	// Max SP
 											bonus bMaxSP,max(1,(.@m*18+50)/100);
 										} else if (.@id == 94) {	// Magic Attack
 											bonus bMatkRate,max(1,(.@m*2+50)/100);
+										} else if (.@id == 95) {	// Third Eye
+											bonus bIntravision;
 										}
 									}
 								} else {
-									if (.@id <= 97) {
-										if (.@id == 95) {	// Third Eye
-											bonus bIntravision;
-										} else if (.@id == 96) {	// Magic Attack
+									if (.@id <= 98) {
+										if (.@id == 96) {	// Magic Attack
 											bonus bMatkRate,max(1,(.@m*2+50)/100);
 										} else if (.@id == 97) {	// Magic Defense
 											bonus bMdef,max(1,(.@m*4+50)/100);
-										}
-									} else {
-										if (.@id == 98) {	// Archmage's Focus
+										} else if (.@id == 98) {	// Archmage's Focus
 											bonus bMatkRate,max(1,(.@m*6+50)/100);
 											bonus bInt,max(1,(.@m*4+50)/100);
 											bonus2 bIgnoreMdefRaceRate,RC_All,max(1,(.@m*8+50)/100);
-										} else if (.@id == 99) {	// Blink
+										}
+									} else {
+										if (.@id == 99) {	// Blink
 											bonus bCastrate,min(-1,(.@m*(-4)-50)/100);
 											bonus bMaxSPrate,max(1,(.@m*3+50)/100);
 										} else if (.@id == 100) {	// Accuracy
 											bonus bHit,max(1,(.@m*10+50)/100);
+										} else if (.@id == 101) {	// Magic Attack
+											bonus bMatkRate,max(1,(.@m*1+50)/100);
 										}
 									}
 								}
 							} else {
-								if (.@id <= 105) {
-									if (.@id <= 102) {
-										if (.@id == 101) {	// Magic Attack
-											bonus bMatkRate,max(1,(.@m*1+50)/100);
-										} else if (.@id == 102) {	// Damage
+								if (.@id <= 106) {
+									if (.@id <= 103) {
+										if (.@id == 102) {	// Damage
 											bonus2 bAddRace,RC_All,max(1,(.@m*1+50)/100);
-										}
-									} else {
-										if (.@id == 103) {	// Steady Aim
+										} else if (.@id == 103) {	// Steady Aim
 											bonus bDex,max(1,(.@m*3+50)/100);
 											bonus bHit,max(1,(.@m*8+50)/100);
-										} else if (.@id == 104) {	// Critical Damage
+										}
+									} else {
+										if (.@id == 104) {	// Critical Damage
 											bonus bCritAtkRate,max(1,(.@m*2+50)/100);
 										} else if (.@id == 105) {	// Dexterity
 											bonus bDex,max(1,(.@m*1+50)/100);
+										} else if (.@id == 106) {	// Accuracy
+											bonus bHit,max(1,(.@m*4+50)/100);
 										}
 									}
 								} else {
-									if (.@id <= 108) {
-										if (.@id == 106) {	// Accuracy
-											bonus bHit,max(1,(.@m*4+50)/100);
-										} else if (.@id == 107) {	// Attack
+									if (.@id <= 109) {
+										if (.@id == 107) {	// Attack
 											bonus bAtk,max(1,(.@m*3+50)/100);
 										} else if (.@id == 108) {	// Critical
 											bonus bCritical,max(1,(.@m*1+50)/100);
-										}
-									} else {
-										if (.@id == 109) {	// Quick Draw
+										} else if (.@id == 109) {	// Quick Draw
 											bonus bAspdRate,max(1,(.@m*2+50)/100);
 											bonus bCritical,max(1,(.@m*3+50)/100);
-										} else if (.@id == 110) {	// Damage
+										}
+									} else {
+										if (.@id == 110) {	// Damage
 											bonus2 bAddRace,RC_All,max(1,(.@m*1+50)/100);
 										} else if (.@id == 111) {	// Attack Speed
 											bonus bAspdRate,max(1,(.@m*1+50)/100);
+										} else if (.@id == 112) {	// Dexterity
+											bonus bDex,max(1,(.@m*1+50)/100);
 										}
 									}
 								}
 							}
 						} else {
-							if (.@id <= 122) {
-								if (.@id <= 116) {
-									if (.@id <= 113) {
-										if (.@id == 112) {	// Dexterity
-											bonus bDex,max(1,(.@m*1+50)/100);
-										} else if (.@id == 113) {	// Attack
+							if (.@id <= 123) {
+								if (.@id <= 117) {
+									if (.@id <= 114) {
+										if (.@id == 113) {	// Attack
 											bonus bAtk,max(1,(.@m*5+50)/100);
-										}
-									} else {
-										if (.@id == 114) {	// Hawk's Eye
+										} else if (.@id == 114) {	// Hawk's Eye
 											bonus bCritical,max(1,(.@m*4+50)/100);
 											bonus bHit,max(1,(.@m*10+50)/100);
-										} else if (.@id == 115) {	// Attack Speed
+										}
+									} else {
+										if (.@id == 115) {	// Attack Speed
 											bonus bAspdRate,max(1,(.@m*1+50)/100);
 										} else if (.@id == 116) {	// Damage
 											bonus2 bAddRace,RC_All,max(1,(.@m*1+50)/100);
+										} else if (.@id == 117) {	// Ranged Damage
+											bonus bLongAtkRate,max(1,(.@m*1+50)/100);
 										}
 									}
 								} else {
-									if (.@id <= 119) {
-										if (.@id == 117) {	// Ranged Damage
-											bonus bLongAtkRate,max(1,(.@m*1+50)/100);
-										} else if (.@id == 118) {	// Marksman
+									if (.@id <= 120) {
+										if (.@id == 118) {	// Marksman
 											bonus bLongAtkRate,max(1,(.@m*6+50)/100);
 											bonus2 bAddRace,RC_All,max(1,(.@m*3+50)/100);
 										} else if (.@id == 119) {	// Dexterity
 											bonus bDex,max(1,(.@m*1+50)/100);
+										} else if (.@id == 120) {	// Evasion
+											bonus bFlee,max(1,(.@m*5+50)/100);
 										}
 									} else {
-										if (.@id == 120) {	// Evasion
-											bonus bFlee,max(1,(.@m*5+50)/100);
-										} else if (.@id == 121) {	// Cast Time
+										if (.@id == 121) {	// Cast Time
 											bonus bCastrate,min(-1,(.@m*(-2)-50)/100);
 										} else if (.@id == 122) {	// Beast Hunter
 											bonus2 bAddRace,RC_Brute,max(1,(.@m*6+50)/100);
 											bonus2 bAddRace,RC_Insect,max(1,(.@m*6+50)/100);
 											bonus2 bAddRace,RC_Plant,max(1,(.@m*6+50)/100);
+										} else if (.@id == 123) {	// Dexterity
+											bonus bDex,max(1,(.@m*2+50)/100);
 										}
 									}
 								}
 							} else {
-								if (.@id <= 128) {
-									if (.@id <= 125) {
-										if (.@id == 123) {	// Dexterity
-											bonus bDex,max(1,(.@m*2+50)/100);
-										} else if (.@id == 124) {	// Accuracy
+								if (.@id <= 129) {
+									if (.@id <= 126) {
+										if (.@id == 124) {	// Accuracy
 											bonus bHit,max(1,(.@m*8+50)/100);
 										} else if (.@id == 125) {	// Attack
 											bonus bAtk,max(1,(.@m*7+50)/100);
-										}
-									} else {
-										if (.@id == 126) {	// Piercing Arrows
+										} else if (.@id == 126) {	// Piercing Arrows
 											bonus2 bIgnoreDefRaceRate,RC_All,max(1,(.@m*8+50)/100);
 											bonus bCritAtkRate,max(1,(.@m*8+50)/100);
-										} else if (.@id == 127) {	// Critical
+										}
+									} else {
+										if (.@id == 127) {	// Critical
 											bonus bCritical,max(1,(.@m*3+50)/100);
 										} else if (.@id == 128) {	// Accuracy
 											bonus bHit,max(1,(.@m*10+50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 131) {
-										if (.@id == 129) {	// Eagle Eye
+										} else if (.@id == 129) {	// Eagle Eye
 											bonus bDex,max(1,(.@m*4+50)/100);
 											bonus bAgi,max(1,(.@m*2+50)/100);
 											bonus bLongAtkRate,max(1,(.@m*8+50)/100);
-										} else if (.@id == 130) {	// Steady Hands
+										}
+									}
+								} else {
+									if (.@id <= 132) {
+										if (.@id == 130) {	// Steady Hands
 											bonus bAspdRate,max(1,(.@m*3+50)/100);
 											bonus bCastrate,min(-1,(.@m*(-3)-50)/100);
 										} else if (.@id == 131) {	// Accuracy
 											bonus bHit,max(1,(.@m*10+50)/100);
+										} else if (.@id == 132) {	// Critical
+											bonus bCritical,max(1,(.@m*1+50)/100);
 										}
 									} else {
-										if (.@id == 132) {	// Critical
-											bonus bCritical,max(1,(.@m*1+50)/100);
-										} else if (.@id == 133) {	// Movement
+										if (.@id == 133) {	// Movement
 											bonus bSpeedAddRate,max(1,(.@m*1+50)/100);
 										} else if (.@id == 134) {	// Nimble Feet
 											bonus bAgi,max(1,(.@m*3+50)/100);
 											bonus bFlee,max(1,(.@m*8+50)/100);
+										} else if (.@id == 135) {	// Critical Defense
+											bonus bCriticalDef,max(1,(.@m*2+50)/100);
 										}
 									}
 								}
 							}
 						}
 					} else {
-						if (.@id <= 156) {
-							if (.@id <= 145) {
-								if (.@id <= 139) {
-									if (.@id <= 136) {
-										if (.@id == 135) {	// Critical Defense
-											bonus bCriticalDef,max(1,(.@m*2+50)/100);
-										} else if (.@id == 136) {	// Agility
+						if (.@id <= 158) {
+							if (.@id <= 146) {
+								if (.@id <= 140) {
+									if (.@id <= 137) {
+										if (.@id == 136) {	// Agility
 											bonus bAgi,max(1,(.@m*1+50)/100);
+										} else if (.@id == 137) {	// Evasion
+											bonus bFlee,max(1,(.@m*3+50)/100);
 										}
 									} else {
-										if (.@id == 137) {	// Evasion
-											bonus bFlee,max(1,(.@m*3+50)/100);
-										} else if (.@id == 138) {	// Attack Speed
+										if (.@id == 138) {	// Attack Speed
 											bonus bAspdRate,max(1,(.@m*1+50)/100);
 										} else if (.@id == 139) {	// Critical
 											bonus bCritical,max(1,(.@m*1+50)/100);
+										} else if (.@id == 140) {	// Light Fingers
+											bonus bAddStealRate,max(1,(.@m*1000+50)/100);
+											bonus bLuk,max(1,(.@m*1+50)/100);
 										}
 									}
 								} else {
-									if (.@id <= 142) {
-										if (.@id == 140) {	// Light Fingers
-											bonus bAddStealRate,max(1,(.@m*1000+50)/100);
-											bonus bLuk,max(1,(.@m*1+50)/100);
-										} else if (.@id == 141) {	// Movement
+									if (.@id <= 143) {
+										if (.@id == 141) {	// Movement
 											bonus bSpeedAddRate,max(1,(.@m*1+50)/100);
 										} else if (.@id == 142) {	// Drop Rate
 											.@drop += max(1,(.@m*10+50)/100);
+										} else if (.@id == 143) {	// Evasion
+											bonus bFlee,max(1,(.@m*5+50)/100);
 										}
 									} else {
-										if (.@id == 143) {	// Evasion
-											bonus bFlee,max(1,(.@m*5+50)/100);
-										} else if (.@id == 144) {	// Attack Speed
+										if (.@id == 144) {	// Attack Speed
 											bonus bAspdRate,max(1,(.@m*1+50)/100);
 										} else if (.@id == 145) {	// Veil of Shadows
 											bonus bSpeedAddRate,max(1,(.@m*4+50)/100);
 											bonus bFlee,max(1,(.@m*6+50)/100);
+										} else if (.@id == 146) {	// Perfect Dodge
+											bonus bFlee2,max(1,(.@m*10+50)/100);
 										}
 									}
 								}
 							} else {
-								if (.@id <= 150) {
-									if (.@id <= 147) {
-										if (.@id == 146) {	// Perfect Dodge
-											bonus bFlee2,max(1,(.@m*10+50)/100);
-										} else if (.@id == 147) {	// Movement
+								if (.@id <= 152) {
+									if (.@id <= 149) {
+										if (.@id == 147) {	// Movement
 											bonus bSpeedAddRate,max(1,(.@m*1+50)/100);
-										}
-									} else {
-										if (.@id == 148) {	// Double Attack
+										} else if (.@id == 148) {	// Double Attack
 											bonus bDoubleAddRate,max(1,(.@m*1+50)/100);
 										} else if (.@id == 149) {	// Venom Training
 											bonus2 bResEff,Eff_Poison,max(1,(.@m*3000+50)/100);
 											bonus bAgi,max(1,(.@m*1+50)/100);
-										} else if (.@id == 150) {	// Agility
-											bonus bAgi,max(1,(.@m*1+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 153) {
-										if (.@id == 151) {	// Movement
+									} else {
+										if (.@id == 150) {	// Agility
+											bonus bAgi,max(1,(.@m*1+50)/100);
+										} else if (.@id == 151) {	// Movement
 											bonus bSpeedAddRate,max(1,(.@m*1+50)/100);
 										} else if (.@id == 152) {	// Attack Speed
 											bonus bAspdRate,max(1,(.@m*1+50)/100);
-										} else if (.@id == 153) {	// Deadly Edge
+										}
+									}
+								} else {
+									if (.@id <= 155) {
+										if (.@id == 153) {	// Deadly Edge
 											bonus bCritical,max(1,(.@m*6+50)/100);
 											bonus bCritAtkRate,max(1,(.@m*10+50)/100);
-										}
-									} else {
-										if (.@id == 154) {	// Agility
+										} else if (.@id == 154) {	// Agility
 											bonus bAgi,max(1,(.@m*2+50)/100);
 										} else if (.@id == 155) {	// Evasion
 											bonus bFlee,max(1,(.@m*7+50)/100);
-										} else if (.@id == 156) {	// Attack Speed
-											bonus bAspdRate,max(1,(.@m*1+50)/100);
 										}
-									}
-								}
-							}
-						} else {
-							if (.@id <= 167) {
-								if (.@id <= 161) {
-									if (.@id <= 158) {
-										if (.@id == 157) {	// Lightning Reflexes
+									} else {
+										if (.@id == 156) {	// Attack Speed
+											bonus bAspdRate,max(1,(.@m*1+50)/100);
+										} else if (.@id == 157) {	// Lightning Reflexes
 											bonus bAspdRate,max(1,(.@m*4+50)/100);
 											bonus bFlee,max(1,(.@m*10+50)/100);
 										} else if (.@id == 158) {	// Evasion
 											bonus bFlee,max(1,(.@m*7+50)/100);
 										}
-									} else {
+									}
+								}
+							}
+						} else {
+							if (.@id <= 169) {
+								if (.@id <= 163) {
+									if (.@id <= 160) {
 										if (.@id == 159) {	// Accuracy
 											bonus bHit,max(1,(.@m*10+50)/100);
 										} else if (.@id == 160) {	// Phantom Strikes
 											bonus bDoubleAddRate,max(1,(.@m*6+50)/100);
 											bonus bFlee2,max(1,(.@m*30+50)/100);
-										} else if (.@id == 161) {	// Evasive Maneuvers
+										}
+									} else {
+										if (.@id == 161) {	// Evasive Maneuvers
 											bonus bFlee2,max(1,(.@m*40+50)/100);
 											bonus bSpeedAddRate,max(1,(.@m*6+50)/100);
 											bonus bCriticalDef,max(1,(.@m*10+50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 164) {
-										if (.@id == 162) {	// Light Fingers
+										} else if (.@id == 162) {	// Light Fingers
 											bonus bAddStealRate,max(1,(.@m*500+50)/100);
 										} else if (.@id == 163) {	// Evasion
 											bonus bFlee,max(1,(.@m*3+50)/100);
-										} else if (.@id == 164) {	// Potion Efficiency
-											bonus bAddItemHealRate,max(1,(.@m*3+50)/100);
 										}
-									} else {
-										if (.@id == 165) {	// Haggler
+									}
+								} else {
+									if (.@id <= 166) {
+										if (.@id == 164) {	// Potion Efficiency
+											bonus bAddItemHealRate,max(1,(.@m*3+50)/100);
+										} else if (.@id == 165) {	// Haggler
 											bonus bLuk,max(1,(.@m*3+50)/100);
 										} else if (.@id == 166) {	// Critical
 											bonus bCritical,max(1,(.@m*1+50)/100);
-										} else if (.@id == 167) {	// Luck
+										}
+									} else {
+										if (.@id == 167) {	// Luck
 											bonus bLuk,max(1,(.@m*1+50)/100);
+										} else if (.@id == 168) {	// Carry Weight
+											bonus bAddMaxWeight,max(1,(.@m*1000+50)/100);
+										} else if (.@id == 169) {	// Experience
+											bonus2 bExpAddRace,RC_All,max(1,(.@m*1+50)/100);
 										}
 									}
 								}
 							} else {
-								if (.@id <= 173) {
-									if (.@id <= 170) {
-										if (.@id == 168) {	// Carry Weight
-											bonus bAddMaxWeight,max(1,(.@m*1000+50)/100);
-										} else if (.@id == 169) {	// Experience
-											bonus2 bExpAddRace,RC_All,max(1,(.@m*1+50)/100);
-										} else if (.@id == 170) {	// Drop Rate
+								if (.@id <= 175) {
+									if (.@id <= 172) {
+										if (.@id == 170) {	// Drop Rate
 											.@drop += max(1,(.@m*10+50)/100);
-										}
-									} else {
-										if (.@id == 171) {	// Appraiser's Eye
+										} else if (.@id == 171) {	// Appraiser's Eye
 											bonus bLuk,max(1,(.@m*2+50)/100);
 											bonus bAddMaxWeight,max(1,(.@m*2000+50)/100);
 										} else if (.@id == 172) {	// Potion Efficiency
 											bonus bAddItemHealRate,max(1,(.@m*3+50)/100);
-										} else if (.@id == 173) {	// Damage
-											bonus2 bAddRace,RC_All,max(1,(.@m*1+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 176) {
-										if (.@id == 174) {	// Movement
+									} else {
+										if (.@id == 173) {	// Damage
+											bonus2 bAddRace,RC_All,max(1,(.@m*1+50)/100);
+										} else if (.@id == 174) {	// Movement
 											bonus bSpeedAddRate,max(1,(.@m*1+50)/100);
 										} else if (.@id == 175) {	// Experience
 											bonus2 bExpAddRace,RC_All,max(1,(.@m*1+50)/100);
-										} else if (.@id == 176) {	// Peddler
+										}
+									}
+								} else {
+									if (.@id <= 178) {
+										if (.@id == 176) {	// Peddler
 											bonus bAddMaxWeight,max(1,(.@m*3000+50)/100);
 											bonus bAddItemHealRate,max(1,(.@m*6+50)/100);
-										}
-									} else {
-										if (.@id == 177) {	// Max HP
+										} else if (.@id == 177) {	// Max HP
 											bonus bMaxHP,max(1,(.@m*70+50)/100);
 										} else if (.@id == 178) {	// Potion Efficiency
 											bonus bAddItemHealRate,max(1,(.@m*4+50)/100);
-										} else if (.@id == 179) {	// Light Fingers
+										}
+									} else {
+										if (.@id == 179) {	// Light Fingers
 											bonus bAddStealRate,max(1,(.@m*300+50)/100);
+										} else if (.@id == 180) {	// Prospector
+											.@drop += max(1,(.@m*5+50)/100);
+											bonus2 bExpAddRace,RC_All,max(1,(.@m*3+50)/100);
+										} else if (.@id == 181) {	// Luck
+											bonus bLuk,max(1,(.@m*1+50)/100);
 										}
 									}
 								}
@@ -2478,54 +2505,43 @@ function	script	F_PT_Bonus	{
 					}
 				}
 			} else {
-				if (.@id <= 269) {
-					if (.@id <= 224) {
-						if (.@id <= 201) {
-							if (.@id <= 190) {
-								if (.@id <= 184) {
-									if (.@id <= 181) {
-										if (.@id == 180) {	// Prospector
-											.@drop += max(1,(.@m*5+50)/100);
-											bonus2 bExpAddRace,RC_All,max(1,(.@m*3+50)/100);
-										} else if (.@id == 181) {	// Luck
-											bonus bLuk,max(1,(.@m*1+50)/100);
-										}
-									} else {
+				if (.@id <= 273) {
+					if (.@id <= 226) {
+						if (.@id <= 203) {
+							if (.@id <= 192) {
+								if (.@id <= 186) {
+									if (.@id <= 183) {
 										if (.@id == 182) {	// Attack
 											bonus bAtk,max(1,(.@m*5+50)/100);
 										} else if (.@id == 183) {	// Drop Rate
 											.@drop += max(1,(.@m*10+50)/100);
-										} else if (.@id == 184) {	// Market Savvy
+										}
+									} else {
+										if (.@id == 184) {	// Market Savvy
 											bonus bAddItemHealRate,max(1,(.@m*15+50)/100);
 											bonus bAddItemSPHealRate,max(1,(.@m*10+50)/100);
 											bonus bAddMaxWeight,max(1,(.@m*3000+50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 187) {
-										if (.@id == 185) {	// Luck
+										} else if (.@id == 185) {	// Luck
 											bonus bLuk,max(1,(.@m*2+50)/100);
 										} else if (.@id == 186) {	// Carry Weight
 											bonus bAddMaxWeight,max(1,(.@m*2000+50)/100);
-										} else if (.@id == 187) {	// Experience
-											bonus2 bExpAddRace,RC_All,max(1,(.@m*1+50)/100);
 										}
-									} else {
-										if (.@id == 188) {	// Fortune's Favour
+									}
+								} else {
+									if (.@id <= 189) {
+										if (.@id == 187) {	// Experience
+											bonus2 bExpAddRace,RC_All,max(1,(.@m*1+50)/100);
+										} else if (.@id == 188) {	// Fortune's Favour
 											bonus bLuk,max(1,(.@m*4+50)/100);
 											bonus bFlee2,max(1,(.@m*30+50)/100);
 											bonus bCritical,max(1,(.@m*4+50)/100);
 										} else if (.@id == 189) {	// Carry Weight
 											bonus bAddMaxWeight,max(1,(.@m*2000+50)/100);
-										} else if (.@id == 190) {	// Light Fingers
-											bonus bAddStealRate,max(1,(.@m*500+50)/100);
 										}
-									}
-								}
-							} else {
-								if (.@id <= 195) {
-									if (.@id <= 192) {
-										if (.@id == 191) {	// Tycoon
+									} else {
+										if (.@id == 190) {	// Light Fingers
+											bonus bAddStealRate,max(1,(.@m*500+50)/100);
+										} else if (.@id == 191) {	// Tycoon
 											bonus2 bExpAddRace,RC_All,max(1,(.@m*4+50)/100);
 											.@drop += max(1,(.@m*5+50)/100);
 											bonus bLuk,max(1,(.@m*3+50)/100);
@@ -2534,171 +2550,175 @@ function	script	F_PT_Bonus	{
 											.@drop += max(1,(.@m*5+50)/100);
 											bonus bAddMaxWeight,max(1,(.@m*4000+50)/100);
 										}
-									} else {
+									}
+								}
+							} else {
+								if (.@id <= 197) {
+									if (.@id <= 194) {
 										if (.@id == 193) {	// Strength
 											bonus bStr,max(1,(.@m*2+50)/100);
 										} else if (.@id == 194) {	// Iron Vow
 											bonus bNoWalkDelay;
 											bonus2 bSubRace,RC_All,max(1,(.@m*15+50)/100);
 											bonus bAspdRate,min(-1,(.@m*(-15)-50)/100);
-										} else if (.@id == 195) {	// Max HP
-											bonus bMaxHP,max(1,(.@m*100+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 198) {
-										if (.@id == 196) {	// Sanctified Mind
+									} else {
+										if (.@id == 195) {	// Max HP
+											bonus bMaxHP,max(1,(.@m*100+50)/100);
+										} else if (.@id == 196) {	// Sanctified Mind
 											bonus bNoCastCancel;
 											bonus bHealPower,max(1,(.@m*30+50)/100);
 											bonus2 bAddRace,RC_All,min(-1,(.@m*(-25)-50)/100);
 										} else if (.@id == 197) {	// Max SP
 											bonus bMaxSP,max(1,(.@m*20+50)/100);
-										} else if (.@id == 198) {	// Overchannel
+										}
+									}
+								} else {
+									if (.@id <= 200) {
+										if (.@id == 198) {	// Overchannel
 											bonus bMatkRate,max(1,(.@m*30+50)/100);
 											bonus bCastrate,max(1,(.@m*25+50)/100);
 											bonus bMaxHPrate,min(-1,(.@m*(-20)-50)/100);
-										}
-									} else {
-										if (.@id == 199) {	// Max HP
+										} else if (.@id == 199) {	// Max HP
 											bonus bMaxHP,max(1,(.@m*100+50)/100);
 										} else if (.@id == 200) {	// Deadeye
 											bonus bLongAtkRate,max(1,(.@m*25+50)/100);
 											bonus bHit,max(1,(.@m*30+50)/100);
 											bonus bShortAtkRate,min(-1,(.@m*(-30)-50)/100);
-										} else if (.@id == 201) {	// Max SP
-											bonus bMaxSP,max(1,(.@m*20+50)/100);
 										}
-									}
-								}
-							}
-						} else {
-							if (.@id <= 212) {
-								if (.@id <= 206) {
-									if (.@id <= 203) {
-										if (.@id == 202) {	// Phantom Gambit
+									} else {
+										if (.@id == 201) {	// Max SP
+											bonus bMaxSP,max(1,(.@m*20+50)/100);
+										} else if (.@id == 202) {	// Phantom Gambit
 											bonus bAspdRate,max(1,(.@m*20+50)/100);
 											bonus bFlee2,max(1,(.@m*40+50)/100);
 											bonus bMaxHPrate,min(-1,(.@m*(-25)-50)/100);
 										} else if (.@id == 203) {	// Max HP
 											bonus bMaxHP,max(1,(.@m*100+50)/100);
 										}
-									} else {
+									}
+								}
+							}
+						} else {
+							if (.@id <= 214) {
+								if (.@id <= 208) {
+									if (.@id <= 205) {
 										if (.@id == 204) {	// Golden Gamble
 											bonus2 bExpAddRace,RC_All,max(1,(.@m*20+50)/100);
 											.@drop += max(1,(.@m*100+50)/100);
 											bonus2 bAddRace,RC_All,min(-1,(.@m*(-20)-50)/100);
 										} else if (.@id == 205) {	// Max SP
 											bonus bMaxSP,max(1,(.@m*20+50)/100);
-										} else if (.@id == 206) {	// Carry Weight
-											bonus bAddMaxWeight,max(1,(.@m*1000+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 209) {
-										if (.@id == 207) {	// HP Recovery
+									} else {
+										if (.@id == 206) {	// Carry Weight
+											bonus bAddMaxWeight,max(1,(.@m*1000+50)/100);
+										} else if (.@id == 207) {	// HP Recovery
 											bonus bHPrecovRate,max(1,(.@m*3+50)/100);
 										} else if (.@id == 208) {	// Max HP
 											bonus bMaxHPrate,max(1,(.@m*1+50)/100);
-										} else if (.@id == 209) {	// Strength
-											bonus bStr,max(1,(.@m*1+50)/100);
 										}
-									} else {
-										if (.@id == 210) {	// Damage
+									}
+								} else {
+									if (.@id <= 211) {
+										if (.@id == 209) {	// Strength
+											bonus bStr,max(1,(.@m*1+50)/100);
+										} else if (.@id == 210) {	// Damage
 											bonus2 bAddRace,RC_All,max(1,(.@m*1+50)/100);
 										} else if (.@id == 211) {	// HP Recovery
 											bonus bHPrecovRate,max(1,(.@m*4+50)/100);
-										} else if (.@id == 212) {	// Damage
+										}
+									} else {
+										if (.@id == 212) {	// Damage
 											bonus2 bAddRace,RC_All,max(1,(.@m*2+50)/100);
+										} else if (.@id == 213) {	// Max HP
+											bonus bMaxHPrate,max(1,(.@m*2+50)/100);
+										} else if (.@id == 214) {	// Max HP
+											bonus bMaxHPrate,max(1,(.@m*1+50)/100);
 										}
 									}
 								}
 							} else {
-								if (.@id <= 218) {
-									if (.@id <= 215) {
-										if (.@id == 213) {	// Max HP
-											bonus bMaxHPrate,max(1,(.@m*2+50)/100);
-										} else if (.@id == 214) {	// Max HP
-											bonus bMaxHPrate,max(1,(.@m*1+50)/100);
-										} else if (.@id == 215) {	// Stun Ward
+								if (.@id <= 220) {
+									if (.@id <= 217) {
+										if (.@id == 215) {	// Stun Ward
 											bonus2 bResEff,Eff_Stun,max(1,(.@m*200+50)/100);
-										}
-									} else {
-										if (.@id == 216) {	// Max SP
+										} else if (.@id == 216) {	// Max SP
 											bonus bMaxSP,max(1,(.@m*8+50)/100);
 										} else if (.@id == 217) {	// HP Recovery
 											bonus bHPrecovRate,max(1,(.@m*4+50)/100);
-										} else if (.@id == 218) {	// Potion Efficiency
-											bonus bAddItemHealRate,max(1,(.@m*4+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 221) {
-										if (.@id == 219) {	// Magic Defense
+									} else {
+										if (.@id == 218) {	// Potion Efficiency
+											bonus bAddItemHealRate,max(1,(.@m*4+50)/100);
+										} else if (.@id == 219) {	// Magic Defense
 											bonus bMdef,max(1,(.@m*2+50)/100);
 										} else if (.@id == 220) {	// Max HP
 											bonus bMaxHP,max(1,(.@m*100+50)/100);
-										} else if (.@id == 221) {	// Max SP
-											bonus bMaxSP,max(1,(.@m*18+50)/100);
 										}
-									} else {
-										if (.@id == 222) {	// Max SP
+									}
+								} else {
+									if (.@id <= 223) {
+										if (.@id == 221) {	// Max SP
+											bonus bMaxSP,max(1,(.@m*18+50)/100);
+										} else if (.@id == 222) {	// Max SP
 											bonus bMaxSP,max(1,(.@m*8+50)/100);
 										} else if (.@id == 223) {	// Magic Damage
 											bonus2 bMagicAddRace,RC_All,max(1,(.@m*1+50)/100);
-										} else if (.@id == 224) {	// Magic Attack
+										}
+									} else {
+										if (.@id == 224) {	// Magic Attack
 											bonus bMatkRate,max(1,(.@m*1+50)/100);
+										} else if (.@id == 225) {	// Magic Defense
+											bonus bMdef,max(1,(.@m*2+50)/100);
+										} else if (.@id == 226) {	// SP Recovery
+											bonus bSPrecovRate,max(1,(.@m*4+50)/100);
 										}
 									}
 								}
 							}
 						}
 					} else {
-						if (.@id <= 246) {
-							if (.@id <= 235) {
-								if (.@id <= 229) {
-									if (.@id <= 226) {
-										if (.@id == 225) {	// Magic Defense
-											bonus bMdef,max(1,(.@m*2+50)/100);
-										} else if (.@id == 226) {	// SP Recovery
-											bonus bSPrecovRate,max(1,(.@m*4+50)/100);
-										}
-									} else {
+						if (.@id <= 249) {
+							if (.@id <= 237) {
+								if (.@id <= 231) {
+									if (.@id <= 228) {
 										if (.@id == 227) {	// Accuracy
 											bonus bHit,max(1,(.@m*6+50)/100);
 										} else if (.@id == 228) {	// Healing Power
 											bonus bHealPower,max(1,(.@m*4+50)/100);
-										} else if (.@id == 229) {	// Magic Attack
-											bonus bMatkRate,max(1,(.@m*2+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 232) {
-										if (.@id == 230) {	// Magic Attack
+									} else {
+										if (.@id == 229) {	// Magic Attack
+											bonus bMatkRate,max(1,(.@m*2+50)/100);
+										} else if (.@id == 230) {	// Magic Attack
 											bonus bMatkRate,max(1,(.@m*1+50)/100);
 										} else if (.@id == 231) {	// Ranged Damage
 											bonus bLongAtkRate,max(1,(.@m*1+50)/100);
-										} else if (.@id == 232) {	// Critical
-											bonus bCritical,max(1,(.@m*1+50)/100);
 										}
-									} else {
-										if (.@id == 233) {	// Accuracy
+									}
+								} else {
+									if (.@id <= 234) {
+										if (.@id == 232) {	// Critical
+											bonus bCritical,max(1,(.@m*1+50)/100);
+										} else if (.@id == 233) {	// Accuracy
 											bonus bHit,max(1,(.@m*6+50)/100);
 										} else if (.@id == 234) {	// Damage
 											bonus2 bAddRace,RC_All,max(1,(.@m*1+50)/100);
-										} else if (.@id == 235) {	// Accuracy
-											bonus bHit,max(1,(.@m*6+50)/100);
 										}
-									}
-								}
-							} else {
-								if (.@id <= 240) {
-									if (.@id <= 237) {
-										if (.@id == 236) {	// Cast Time
+									} else {
+										if (.@id == 235) {	// Accuracy
+											bonus bHit,max(1,(.@m*6+50)/100);
+										} else if (.@id == 236) {	// Cast Time
 											bonus bCastrate,min(-1,(.@m*(-2)-50)/100);
 										} else if (.@id == 237) {	// Critical
 											bonus bCritical,max(1,(.@m*3+50)/100);
 										}
-									} else {
+									}
+								}
+							} else {
+								if (.@id <= 243) {
+									if (.@id <= 240) {
 										if (.@id == 238) {	// Critical
 											bonus bCritical,max(1,(.@m*1+50)/100);
 										} else if (.@id == 239) {	// Double Attack
@@ -2706,9 +2726,7 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 240) {	// Evasion
 											bonus bFlee,max(1,(.@m*3+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 243) {
+									} else {
 										if (.@id == 241) {	// Accuracy
 											bonus bHit,max(1,(.@m*6+50)/100);
 										} else if (.@id == 242) {	// Movement
@@ -2716,7 +2734,9 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 243) {	// Light Fingers
 											bonus bAddStealRate,max(1,(.@m*300+50)/100);
 										}
-									} else {
+									}
+								} else {
+									if (.@id <= 246) {
 										if (.@id == 244) {	// Attack Speed
 											bonus bAspdRate,max(1,(.@m*1+50)/100);
 										} else if (.@id == 245) {	// Evasion
@@ -2724,29 +2744,27 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 246) {	// Evasion
 											bonus bFlee,max(1,(.@m*3+50)/100);
 										}
-									}
-								}
-							}
-						} else {
-							if (.@id <= 257) {
-								if (.@id <= 251) {
-									if (.@id <= 248) {
+									} else {
 										if (.@id == 247) {	// Light Fingers
 											bonus bAddStealRate,max(1,(.@m*200+50)/100);
 										} else if (.@id == 248) {	// Carry Weight
 											bonus bAddMaxWeight,max(1,(.@m*1000+50)/100);
-										}
-									} else {
-										if (.@id == 249) {	// Light Fingers
+										} else if (.@id == 249) {	// Light Fingers
 											bonus bAddStealRate,max(1,(.@m*300+50)/100);
-										} else if (.@id == 250) {	// Potion Efficiency
+										}
+									}
+								}
+							}
+						} else {
+							if (.@id <= 260) {
+								if (.@id <= 254) {
+									if (.@id <= 251) {
+										if (.@id == 250) {	// Potion Efficiency
 											bonus bAddItemHealRate,max(1,(.@m*4+50)/100);
 										} else if (.@id == 251) {	// Strength
 											bonus bStr,max(1,(.@m*1+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 254) {
+									} else {
 										if (.@id == 252) {	// Drop Rate
 											.@drop += max(1,(.@m*10+50)/100);
 										} else if (.@id == 253) {	// Carry Weight
@@ -2754,7 +2772,9 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 254) {	// Bash
 											bonus2 bSkillAtk,"SM_BASH",max(1,(.@m*4+50)/100);
 										}
-									} else {
+									}
+								} else {
+									if (.@id <= 257) {
 										if (.@id == 255) {	// Magnum Break
 											bonus2 bSkillAtk,"SM_MAGNUM",max(1,(.@m*4+50)/100);
 										} else if (.@id == 256) {	// Bowling Bash
@@ -2765,11 +2785,7 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"SM_MAGNUM",max(1,(.@m*8+50)/100);
 											bonus2 bSkillUseSPrate,"SM_BASH",max(1,(.@m*10+50)/100);
 										}
-									}
-								}
-							} else {
-								if (.@id <= 263) {
-									if (.@id <= 260) {
+									} else {
 										if (.@id == 258) {	// Fire Ward
 											bonus2 bSubEle,Ele_Fire,max(1,(.@m*3+50)/100);
 										} else if (.@id == 259) {	// Demi-Human Ward
@@ -2777,7 +2793,11 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 260) {	// Earth Ward
 											bonus2 bSubEle,Ele_Earth,max(1,(.@m*3+50)/100);
 										}
-									} else {
+									}
+								}
+							} else {
+								if (.@id <= 266) {
+									if (.@id <= 263) {
 										if (.@id == 261) {	// Brute Ward
 											bonus2 bSubRace,RC_Brute,max(1,(.@m*3+50)/100);
 										} else if (.@id == 262) {	// Veteran's Plate
@@ -2786,9 +2806,7 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 263) {	// Demi-Human Hunter
 											bonus2 bAddRace,RC_DemiHuman,max(1,(.@m*3+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 266) {
+									} else {
 										if (.@id == 264) {	// Brute Hunter
 											bonus2 bAddRace,RC_Brute,max(1,(.@m*3+50)/100);
 										} else if (.@id == 265) {	// Wind Hunter
@@ -2796,7 +2814,9 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 266) {	// Earth Hunter
 											bonus2 bAddEle,Ele_Earth,max(1,(.@m*3+50)/100);
 										}
-									} else {
+									}
+								} else {
+									if (.@id <= 269) {
 										if (.@id == 267) {	// Man-at-Arms
 											bonus2 bAddRace,RC_DemiHuman,max(1,(.@m*6+50)/100);
 											bonus2 bAddSize,Size_Large,max(1,(.@m*6+50)/100);
@@ -2806,26 +2826,26 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 269) {	// Shield Charge
 											bonus2 bSkillAtk,"CR_SHIELDCHARGE",max(1,(.@m*4+50)/100);
 										}
+									} else {
+										if (.@id == 271) {	// Heal
+											bonus2 bSkillHeal,"AL_HEAL",max(1,(.@m*5+50)/100);
+										} else if (.@id == 272) {	// Holy Light
+											bonus2 bSkillAtk,"AL_HOLYLIGHT",max(1,(.@m*4+50)/100);
+										} else if (.@id == 273) {	// Triple Attack
+											bonus2 bSkillAtk,"MO_TRIPLEATTACK",max(1,(.@m*4+50)/100);
+										}
 									}
 								}
 							}
 						}
 					}
 				} else {
-					if (.@id <= 317) {
-						if (.@id <= 293) {
-							if (.@id <= 281) {
-								if (.@id <= 275) {
-									if (.@id <= 272) {
-										if (.@id == 271) {	// Heal
-											bonus2 bSkillHeal,"AL_HEAL",max(1,(.@m*5+50)/100);
-										} else if (.@id == 272) {	// Holy Light
-											bonus2 bSkillAtk,"AL_HOLYLIGHT",max(1,(.@m*4+50)/100);
-										}
-									} else {
-										if (.@id == 273) {	// Triple Attack
-											bonus2 bSkillAtk,"MO_TRIPLEATTACK",max(1,(.@m*4+50)/100);
-										} else if (.@id == 274) {	// Merciful Prayer
+					if (.@id <= 320) {
+						if (.@id <= 296) {
+							if (.@id <= 284) {
+								if (.@id <= 278) {
+									if (.@id <= 275) {
+										if (.@id == 274) {	// Merciful Prayer
 											bonus4 bAutoSpellOnSkill,"AL_HEAL","AL_HEAL",5,max(1,(.@m*40+50)/100);
 											bonus2 bSkillHeal,"AL_HEAL",max(1,(.@m*12+50)/100);
 											bonus2 bSkillUseSPrate,"AL_HEAL",max(1,(.@m*10+50)/100);
@@ -2833,9 +2853,7 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 275) {	// Holy Ward
 											bonus2 bSubEle,Ele_Holy,max(1,(.@m*3+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 278) {
+									} else {
 										if (.@id == 276) {	// Shadow Ward
 											bonus2 bSubEle,Ele_Dark,max(1,(.@m*3+50)/100);
 										} else if (.@id == 277) {	// Undead Ward
@@ -2843,7 +2861,9 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 278) {	// Demon Ward
 											bonus2 bSubRace,RC_Demon,max(1,(.@m*3+50)/100);
 										}
-									} else {
+									}
+								} else {
+									if (.@id <= 281) {
 										if (.@id == 279) {	// Sanctified Aegis
 											bonus2 bSubEle,Ele_Undead,max(1,(.@m*8+50)/100);
 											bonus2 bSubRace,RC_Angel,max(1,(.@m*6+50)/100);
@@ -2852,28 +2872,26 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 281) {	// Demon Hunter
 											bonus2 bAddRace,RC_Demon,max(1,(.@m*3+50)/100);
 										}
-									}
-								}
-							} else {
-								if (.@id <= 286) {
-									if (.@id <= 283) {
+									} else {
 										if (.@id == 282) {	// Shadow Hunter
 											bonus2 bAddEle,Ele_Dark,max(1,(.@m*3+50)/100);
 										} else if (.@id == 283) {	// Undead Hunter
 											bonus2 bAddEle,Ele_Undead,max(1,(.@m*3+50)/100);
-										}
-									} else {
-										if (.@id == 284) {	// Exorcist
+										} else if (.@id == 284) {	// Exorcist
 											bonus2 bAddRace,RC_Undead,max(1,(.@m*7+50)/100);
 											bonus2 bAddRace,RC_Demon,max(1,(.@m*7+50)/100);
-										} else if (.@id == 285) {	// Blessing
+										}
+									}
+								}
+							} else {
+								if (.@id <= 290) {
+									if (.@id <= 286) {
+										if (.@id == 285) {	// Blessing
 											.@l = getskilllv(34); if (.@l > 0 && .@l < 13) addtoskill 34,min(13-.@l,max(1,(.@m*1+50)/100));
 										} else if (.@id == 286) {	// Increase AGI
 											.@l = getskilllv(29); if (.@l > 0 && .@l < 13) addtoskill 29,min(13-.@l,max(1,(.@m*1+50)/100));
 										}
-									}
-								} else {
-									if (.@id <= 290) {
+									} else {
 										if (.@id == 288) {	// Fire Bolt
 											bonus2 bSkillAtk,"MG_FIREBOLT",max(1,(.@m*4+50)/100);
 										} else if (.@id == 289) {	// Cold Bolt
@@ -2881,7 +2899,9 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 290) {	// Lightning Bolt
 											bonus2 bSkillAtk,"MG_LIGHTNINGBOLT",max(1,(.@m*4+50)/100);
 										}
-									} else {
+									}
+								} else {
+									if (.@id <= 293) {
 										if (.@id == 291) {	// Bolt Mastery
 											bonus4 bAutoSpellOnSkill,"MG_FIREBOLT","MG_FIREBOLT",5,max(1,(.@m*30+50)/100);
 											bonus4 bAutoSpellOnSkill,"MG_COLDBOLT","MG_COLDBOLT",5,max(1,(.@m*30+50)/100);
@@ -2894,32 +2914,30 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 293) {	// Water Ward
 											bonus2 bSubEle,Ele_Water,max(1,(.@m*3+50)/100);
 										}
-									}
-								}
-							}
-						} else {
-							if (.@id <= 305) {
-								if (.@id <= 298) {
-									if (.@id <= 295) {
+									} else {
 										if (.@id == 294) {	// Wind Ward
 											bonus2 bSubEle,Ele_Wind,max(1,(.@m*3+50)/100);
 										} else if (.@id == 295) {	// Earth Ward
 											bonus2 bSubEle,Ele_Earth,max(1,(.@m*3+50)/100);
-										}
-									} else {
-										if (.@id == 296) {	// Elemental Ward
+										} else if (.@id == 296) {	// Elemental Ward
 											bonus2 bSubEle,Ele_Fire,max(1,(.@m*5+50)/100);
 											bonus2 bSubEle,Ele_Water,max(1,(.@m*5+50)/100);
 											bonus2 bSubEle,Ele_Wind,max(1,(.@m*5+50)/100);
 											bonus2 bSubEle,Ele_Earth,max(1,(.@m*5+50)/100);
-										} else if (.@id == 297) {	// Formless Magic
+										}
+									}
+								}
+							}
+						} else {
+							if (.@id <= 308) {
+								if (.@id <= 301) {
+									if (.@id <= 298) {
+										if (.@id == 297) {	// Formless Magic
 											bonus2 bMagicAddRace,RC_Formless,max(1,(.@m*3+50)/100);
 										} else if (.@id == 298) {	// Undead Magic
 											bonus2 bMagicAddRace,RC_Undead,max(1,(.@m*3+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 301) {
+									} else {
 										if (.@id == 299) {	// Water Magic
 											bonus2 bMagicAddEle,Ele_Water,max(1,(.@m*3+50)/100);
 										} else if (.@id == 300) {	// Fire Magic
@@ -2929,7 +2947,9 @@ function	script	F_PT_Bonus	{
 											bonus2 bMagicAddRace,RC_Dragon,max(1,(.@m*7+50)/100);
 											bonus2 bMagicAddSize,Size_Large,max(1,(.@m*5+50)/100);
 										}
-									} else {
+									}
+								} else {
+									if (.@id <= 305) {
 										if (.@id == 302) {	// Meteor Storm
 											bonus2 bSkillAtk,"WZ_METEOR",max(1,(.@m*4+50)/100);
 										} else if (.@id == 303) {	// Jupitel Thunder
@@ -2937,11 +2957,7 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 305) {	// Double Strafe
 											bonus2 bSkillAtk,"AC_DOUBLE",max(1,(.@m*5+50)/100);
 										}
-									}
-								}
-							} else {
-								if (.@id <= 311) {
-									if (.@id <= 308) {
+									} else {
 										if (.@id == 306) {	// Arrow Shower
 											bonus2 bSkillAtk,"AC_SHOWER",max(1,(.@m*5+50)/100);
 										} else if (.@id == 307) {	// Arrow Repel
@@ -2952,7 +2968,11 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"AC_SHOWER",max(1,(.@m*8+50)/100);
 											bonus2 bSkillUseSPrate,"AC_DOUBLE",max(1,(.@m*10+50)/100);
 										}
-									} else {
+									}
+								}
+							} else {
+								if (.@id <= 314) {
+									if (.@id <= 311) {
 										if (.@id == 309) {	// Brute Ward
 											bonus2 bSubRace,RC_Brute,max(1,(.@m*3+50)/100);
 										} else if (.@id == 310) {	// Insect Ward
@@ -2960,9 +2980,7 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 311) {	// Plant Ward
 											bonus2 bSubRace,RC_Plant,max(1,(.@m*3+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 314) {
+									} else {
 										if (.@id == 312) {	// Wind Ward
 											bonus2 bSubEle,Ele_Wind,max(1,(.@m*3+50)/100);
 										} else if (.@id == 313) {	// Wildwalker
@@ -2971,7 +2989,9 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 314) {	// Insect Hunter
 											bonus2 bAddRace,RC_Insect,max(1,(.@m*3+50)/100);
 										}
-									} else {
+									}
+								} else {
+									if (.@id <= 317) {
 										if (.@id == 315) {	// Plant Hunter
 											bonus2 bAddRace,RC_Plant,max(1,(.@m*3+50)/100);
 										} else if (.@id == 316) {	// Fire Hunter
@@ -2979,33 +2999,31 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 317) {	// Water Hunter
 											bonus2 bAddEle,Ele_Water,max(1,(.@m*3+50)/100);
 										}
-									}
-								}
-							}
-						}
-					} else {
-						if (.@id <= 341) {
-							if (.@id <= 329) {
-								if (.@id <= 323) {
-									if (.@id <= 319) {
+									} else {
 										if (.@id == 318) {	// Master Huntsman
 											bonus2 bAddRace,RC_Brute,max(1,(.@m*6+50)/100);
 											bonus2 bAddRace,RC_Fish,max(1,(.@m*6+50)/100);
 											bonus2 bAddSize,Size_Medium,max(1,(.@m*6+50)/100);
 										} else if (.@id == 319) {	// Blitz Beat
 											bonus2 bSkillAtk,"HT_BLITZBEAT",max(1,(.@m*5+50)/100);
-										}
-									} else {
-										if (.@id == 320) {	// Sharpshooting
+										} else if (.@id == 320) {	// Sharpshooting
 											bonus2 bSkillAtk,"SN_SHARPSHOOTING",max(1,(.@m*5+50)/100);
-										} else if (.@id == 322) {	// Sonic Blow
+										}
+									}
+								}
+							}
+						}
+					} else {
+						if (.@id <= 345) {
+							if (.@id <= 332) {
+								if (.@id <= 326) {
+									if (.@id <= 323) {
+										if (.@id == 322) {	// Sonic Blow
 											bonus2 bSkillAtk,"AS_SONICBLOW",max(1,(.@m*5+50)/100);
 										} else if (.@id == 323) {	// Grimtooth
 											bonus2 bSkillAtk,"AS_GRIMTOOTH",max(1,(.@m*5+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 326) {
+									} else {
 										if (.@id == 324) {	// Venom Splasher
 											bonus2 bSkillAtk,"AS_SPLASHER",max(1,(.@m*5+50)/100);
 										} else if (.@id == 325) {	// Assassin's Art
@@ -3016,7 +3034,9 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 326) {	// Poison Ward
 											bonus2 bSubEle,Ele_Poison,max(1,(.@m*3+50)/100);
 										}
-									} else {
+									}
+								} else {
+									if (.@id <= 329) {
 										if (.@id == 327) {	// Ghost Ward
 											bonus2 bSubEle,Ele_Ghost,max(1,(.@m*3+50)/100);
 										} else if (.@id == 328) {	// Shadow Ward
@@ -3024,129 +3044,141 @@ function	script	F_PT_Bonus	{
 										} else if (.@id == 329) {	// Demi-Human Ward
 											bonus2 bSubRace,RC_DemiHuman,max(1,(.@m*3+50)/100);
 										}
-									}
-								}
-							} else {
-								if (.@id <= 334) {
-									if (.@id <= 331) {
+									} else {
 										if (.@id == 330) {	// Shade's Cloak
 											bonus2 bSubEle,Ele_Poison,max(1,(.@m*8+50)/100);
 											bonus2 bSubRace,RC_Demon,max(1,(.@m*6+50)/100);
 										} else if (.@id == 331) {	// Demi-Human Hunter
 											bonus2 bAddRace,RC_DemiHuman,max(1,(.@m*3+50)/100);
-										}
-									} else {
-										if (.@id == 332) {	// Holy Hunter
+										} else if (.@id == 332) {	// Holy Hunter
 											bonus2 bAddEle,Ele_Holy,max(1,(.@m*3+50)/100);
-										} else if (.@id == 333) {	// Ghost Hunter
+										}
+									}
+								}
+							} else {
+								if (.@id <= 339) {
+									if (.@id <= 335) {
+										if (.@id == 333) {	// Ghost Hunter
 											bonus2 bAddEle,Ele_Ghost,max(1,(.@m*3+50)/100);
 										} else if (.@id == 334) {	// Poison Hunter
 											bonus2 bAddEle,Ele_Poison,max(1,(.@m*3+50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 337) {
-										if (.@id == 335) {	// Backstabber
+										} else if (.@id == 335) {	// Backstabber
 											bonus2 bAddRace,RC_DemiHuman,max(1,(.@m*7+50)/100);
 											bonus2 bAddSize,Size_Small,max(1,(.@m*6+50)/100);
 											bonus bCritAtkRate,max(1,(.@m*6+50)/100);
-										} else if (.@id == 336) {	// Back Stab
+										}
+									} else {
+										if (.@id == 336) {	// Back Stab
 											bonus2 bSkillAtk,"RG_BACKSTAP",max(1,(.@m*5+50)/100);
 										} else if (.@id == 337) {	// Meteor Assault
 											bonus2 bSkillAtk,"ASC_METEORASSAULT",max(1,(.@m*5+50)/100);
-										}
-									} else {
-										if (.@id == 339) {	// Mammonite
+										} else if (.@id == 339) {	// Mammonite
 											bonus2 bSkillAtk,"MC_MAMMONITE",max(1,(.@m*5+50)/100);
-										} else if (.@id == 340) {	// Hammer Fall
+										}
+									}
+								} else {
+									if (.@id <= 342) {
+										if (.@id == 340) {	// Hammer Fall
 											bonus2 bSkillAtk,"BS_HAMMERFALL",max(1,(.@m*5+50)/100);
 										} else if (.@id == 341) {	// Cart Revolution
 											bonus2 bSkillAtk,"MC_CARTREVOLUTION",max(1,(.@m*5+50)/100);
+										} else if (.@id == 342) {	// Mammon's Fist
+											bonus4 bAutoSpellOnSkill,"MC_MAMMONITE","MC_MAMMONITE",5,max(1,(.@m*40+50)/100);
+											bonus2 bSkillAtk,"MC_MAMMONITE",max(1,(.@m*10+50)/100);
+											bonus2 bSkillAtk,"MC_CARTREVOLUTION",max(1,(.@m*8+50)/100);
+											bonus2 bSkillUseSPrate,"MC_MAMMONITE",max(1,(.@m*10+50)/100);
+										}
+									} else {
+										if (.@id == 343) {	// Neutral Ward
+											bonus2 bSubEle,Ele_Neutral,max(1,(.@m*3+50)/100);
+										} else if (.@id == 344) {	// Water Ward
+											bonus2 bSubEle,Ele_Water,max(1,(.@m*3+50)/100);
+										} else if (.@id == 345) {	// Formless Ward
+											bonus2 bSubRace,RC_Formless,max(1,(.@m*3+50)/100);
 										}
 									}
 								}
 							}
 						} else {
-							if (.@id <= 352) {
-								if (.@id <= 346) {
-									if (.@id <= 343) {
-										if (.@id == 342) {	// Mammon's Fist
-											bonus4 bAutoSpellOnSkill,"MC_MAMMONITE","MC_MAMMONITE",5,max(1,(.@m*40+50)/100);
-											bonus2 bSkillAtk,"MC_MAMMONITE",max(1,(.@m*10+50)/100);
-											bonus2 bSkillAtk,"MC_CARTREVOLUTION",max(1,(.@m*8+50)/100);
-											bonus2 bSkillUseSPrate,"MC_MAMMONITE",max(1,(.@m*10+50)/100);
-										} else if (.@id == 343) {	// Neutral Ward
-											bonus2 bSubEle,Ele_Neutral,max(1,(.@m*3+50)/100);
-										}
-									} else {
-										if (.@id == 344) {	// Water Ward
-											bonus2 bSubEle,Ele_Water,max(1,(.@m*3+50)/100);
-										} else if (.@id == 345) {	// Formless Ward
-											bonus2 bSubRace,RC_Formless,max(1,(.@m*3+50)/100);
-										} else if (.@id == 346) {	// Dragon Ward
+							if (.@id <= 357) {
+								if (.@id <= 350) {
+									if (.@id <= 347) {
+										if (.@id == 346) {	// Dragon Ward
 											bonus2 bSubRace,RC_Dragon,max(1,(.@m*3+50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 349) {
-										if (.@id == 347) {	// Trader's Insurance
+										} else if (.@id == 347) {	// Trader's Insurance
 											bonus2 bSubRace,RC_All,max(1,(.@m*3+50)/100);
 											bonus2 bSubEle,Ele_Neutral,max(1,(.@m*5+50)/100);
-										} else if (.@id == 348) {	// Formless Hunter
+										}
+									} else {
+										if (.@id == 348) {	// Formless Hunter
 											bonus2 bAddRace,RC_Formless,max(1,(.@m*3+50)/100);
 										} else if (.@id == 349) {	// Fish Hunter
 											bonus2 bAddRace,RC_Fish,max(1,(.@m*3+50)/100);
-										}
-									} else {
-										if (.@id == 350) {	// Neutral Hunter
+										} else if (.@id == 350) {	// Neutral Hunter
 											bonus2 bAddEle,Ele_Neutral,max(1,(.@m*3+50)/100);
-										} else if (.@id == 351) {	// Earth Hunter
+										}
+									}
+								} else {
+									if (.@id <= 353) {
+										if (.@id == 351) {	// Earth Hunter
 											bonus2 bAddEle,Ele_Earth,max(1,(.@m*3+50)/100);
 										} else if (.@id == 352) {	// Pest Control
 											bonus2 bAddRace,RC_Insect,max(1,(.@m*7+50)/100);
 											bonus2 bAddRace,RC_Plant,max(1,(.@m*7+50)/100);
+										} else if (.@id == 353) {	// Potion Pitcher
+											bonus2 bSkillHeal,"AM_POTIONPITCHER",max(1,(.@m*6+50)/100);
+										}
+									} else {
+										if (.@id == 354) {	// Bomb
+											bonus2 bSkillAtk,"AM_DEMONSTRATION",max(1,(.@m*5+50)/100);
+										} else if (.@id == 356) {	// Stun Strike
+											bonus2 bAddEff,Eff_Stun,max(1,(.@m*300+50)/100);
+										} else if (.@id == 357) {	// 1H Sword Mastery
+											bonus2 bWeaponDamageRate,W_1HSWORD,max(1,(.@m*3+50)/100);
 										}
 									}
 								}
 							} else {
-								if (.@id <= 359) {
-									if (.@id <= 356) {
-										if (.@id == 353) {	// Potion Pitcher
-											bonus2 bSkillHeal,"AM_POTIONPITCHER",max(1,(.@m*6+50)/100);
-										} else if (.@id == 354) {	// Bomb
-											bonus2 bSkillAtk,"AM_DEMONSTRATION",max(1,(.@m*5+50)/100);
-										} else if (.@id == 356) {	// Stun Strike
-											bonus2 bAddEff,Eff_Stun,max(1,(.@m*300+50)/100);
-										}
-									} else {
-										if (.@id == 357) {	// 1H Sword Mastery
-											bonus2 bWeaponDamageRate,W_1HSWORD,max(1,(.@m*3+50)/100);
-										} else if (.@id == 358) {	// Concussive Blows
+								if (.@id <= 364) {
+									if (.@id <= 360) {
+										if (.@id == 358) {	// Concussive Blows
 											bonus2 bAddEff,Eff_Stun,max(1,(.@m*600+50)/100);
 											bonus2 bWeaponDamageRate,W_2HSWORD,max(1,(.@m*6+50)/100);
 										} else if (.@id == 359) {	// Melee Guard
 											bonus bNearAtkDef,max(1,(.@m*2+50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 363) {
-										if (.@id == 360) {	// 2H Sword Mastery
+										} else if (.@id == 360) {	// 2H Sword Mastery
 											bonus2 bWeaponDamageRate,W_2HSWORD,max(1,(.@m*3+50)/100);
-										} else if (.@id == 362) {	// Bloodlust
+										}
+									} else {
+										if (.@id == 362) {	// Bloodlust
 											bonus bHPGainValue,max(1,(.@m*5+50)/100);
 										} else if (.@id == 363) {	// Spearwall
 											bonus2 bWeaponDamageRate,W_1HSPEAR,max(1,(.@m*8+50)/100);
 											bonus bNearAtkDef,max(1,(.@m*5+50)/100);
 											bonus bNoKnockback;
-										}
-									} else {
-										if (.@id == 364) {	// Stun Strike
+										} else if (.@id == 364) {	// Stun Strike
 											bonus2 bAddEff,Eff_Stun,max(1,(.@m*300+50)/100);
-										} else if (.@id == 365) {	// Berserk Instinct
+										}
+									}
+								} else {
+									if (.@id <= 368) {
+										if (.@id == 365) {	// Berserk Instinct
 											bonus3 bAutoSpell,"SM_MAGNUM",5,max(1,(.@m*30+50)/100);
 											bonus bHPGainValue,max(1,(.@m*6+50)/100);
 										} else if (.@id == 366) {	// Axe Mastery
 											bonus2 bWeaponDamageRate,W_1HAXE,max(1,(.@m*3+50)/100);
+										} else if (.@id == 368) {	// 2H Sword Mastery
+											bonus2 bWeaponDamageRate,W_2HSWORD,max(1,(.@m*3+50)/100);
+										}
+									} else {
+										if (.@id == 369) {	// Critical Guard
+											bonus bCritDefRate,max(1,(.@m*4+50)/100);
+										} else if (.@id == 370) {	// Executioner
+											bonus bCritAtkRate,max(1,(.@m*10+50)/100);
+											bonus2 bIgnoreDefRaceRate,RC_All,max(1,(.@m*6+50)/100);
+											bonus2 bAddClass,Class_Boss,max(1,(.@m*4+50)/100);
+										} else if (.@id == 371) {	// Spear Mastery
+											bonus2 bWeaponDamageRate,W_1HSPEAR,max(1,(.@m*3+50)/100);
 										}
 									}
 								}
@@ -3156,180 +3188,158 @@ function	script	F_PT_Bonus	{
 				}
 			}
 		} else {
-			if (.@id <= 556) {
-				if (.@id <= 466) {
-					if (.@id <= 416) {
-						if (.@id <= 391) {
-							if (.@id <= 379) {
-								if (.@id <= 372) {
-									if (.@id <= 369) {
-										if (.@id == 368) {	// 2H Sword Mastery
-											bonus2 bWeaponDamageRate,W_2HSWORD,max(1,(.@m*3+50)/100);
-										} else if (.@id == 369) {	// Critical Guard
-											bonus bCritDefRate,max(1,(.@m*4+50)/100);
+			if (.@id <= 562) {
+				if (.@id <= 471) {
+					if (.@id <= 422) {
+						if (.@id <= 396) {
+							if (.@id <= 383) {
+								if (.@id <= 376) {
+									if (.@id <= 373) {
+										if (.@id == 372) {	// Stun Strike
+											bonus2 bAddEff,Eff_Stun,max(1,(.@m*300+50)/100);
+										} else if (.@id == 373) {	// Healing Received
+											bonus bHealPower2,max(1,(.@m*4+50)/100);
 										}
 									} else {
-										if (.@id == 370) {	// Executioner
-											bonus bCritAtkRate,max(1,(.@m*10+50)/100);
-											bonus2 bIgnoreDefRaceRate,RC_All,max(1,(.@m*6+50)/100);
-											bonus2 bAddClass,Class_Boss,max(1,(.@m*4+50)/100);
-										} else if (.@id == 371) {	// Spear Mastery
-											bonus2 bWeaponDamageRate,W_1HSPEAR,max(1,(.@m*3+50)/100);
-										} else if (.@id == 372) {	// Stun Strike
-											bonus2 bAddEff,Eff_Stun,max(1,(.@m*300+50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 375) {
-										if (.@id == 373) {	// Healing Received
-											bonus bHealPower2,max(1,(.@m*4+50)/100);
-										} else if (.@id == 374) {	// Mace Mastery
+										if (.@id == 374) {	// Mace Mastery
 											bonus2 bWeaponDamageRate,W_MACE,max(1,(.@m*3+50)/100);
 										} else if (.@id == 375) {	// Soothing Aura
 											bonus2 bRegenPercentHP,max(1,(.@m*1+50)/100),8000;
 											bonus bHealPower,max(1,(.@m*8+50)/100);
-										}
-									} else {
-										if (.@id == 376) {	// Damage Reduction
+										} else if (.@id == 376) {	// Damage Reduction
 											bonus2 bSubRace,RC_All,max(1,(.@m*1+50)/100);
-										} else if (.@id == 377) {	// Knuckle Mastery
+										}
+									}
+								} else {
+									if (.@id <= 380) {
+										if (.@id == 377) {	// Knuckle Mastery
 											bonus2 bWeaponDamageRate,W_KNUCKLE,max(1,(.@m*3+50)/100);
 										} else if (.@id == 379) {	// Spell Guard
 											bonus bMagicAtkDef,max(1,(.@m*2+50)/100);
-										}
-									}
-								}
-							} else {
-								if (.@id <= 385) {
-									if (.@id <= 381) {
-										if (.@id == 380) {	// Divine Wrath
+										} else if (.@id == 380) {	// Divine Wrath
 											bonus3 bAutoSpell,"AL_HOLYLIGHT",3,max(1,(.@m*30+50)/100);
 											bonus2 bAddRace,RC_Undead,max(1,(.@m*5+50)/100);
-										} else if (.@id == 381) {	// Healing Received
-											bonus bHealPower2,max(1,(.@m*4+50)/100);
 										}
 									} else {
-										if (.@id == 382) {	// Purifier
+										if (.@id == 381) {	// Healing Received
+											bonus bHealPower2,max(1,(.@m*4+50)/100);
+										} else if (.@id == 382) {	// Purifier
 											bonus2 bResEff,Eff_Stone,max(1,(.@m*2000+50)/100);
 											bonus2 bResEff,Eff_Confusion,max(1,(.@m*2000+50)/100);
 											bonus2 bResEff,Eff_Sleep,max(1,(.@m*2000+50)/100);
 										} else if (.@id == 383) {	// Sleep Ward
 											bonus2 bResEff,Eff_Sleep,max(1,(.@m*400+50)/100);
-										} else if (.@id == 385) {	// Knuckle Mastery
-											bonus2 bWeaponDamageRate,W_KNUCKLE,max(1,(.@m*3+50)/100);
 										}
 									}
-								} else {
-									if (.@id <= 388) {
-										if (.@id == 386) {	// Regeneration
+								}
+							} else {
+								if (.@id <= 389) {
+									if (.@id <= 386) {
+										if (.@id == 385) {	// Knuckle Mastery
+											bonus2 bWeaponDamageRate,W_KNUCKLE,max(1,(.@m*3+50)/100);
+										} else if (.@id == 386) {	// Regeneration
 											bonus2 bRegenPercentHP,max(1,(.@m*1+50)/100),12000;
-										} else if (.@id == 387) {	// Martyr's Grace
+										}
+									} else {
+										if (.@id == 387) {	// Martyr's Grace
 											bonus bMagicAtkDef,max(1,(.@m*8+50)/100);
 											bonus bLongAtkDef,max(1,(.@m*6+50)/100);
 											bonus bAddItemHealRate,max(1,(.@m*10+50)/100);
 										} else if (.@id == 388) {	// Potion Efficiency
 											bonus bAddItemSPHealRate,max(1,(.@m*5+50)/100);
-										}
-									} else {
-										if (.@id == 389) {	// Healing Received
+										} else if (.@id == 389) {	// Healing Received
 											bonus bHealPower2,max(1,(.@m*4+50)/100);
-										} else if (.@id == 390) {	// Spell Guard
+										}
+									}
+								} else {
+									if (.@id <= 392) {
+										if (.@id == 390) {	// Spell Guard
 											bonus bMagicAtkDef,max(1,(.@m*2+50)/100);
 										} else if (.@id == 391) {	// Book Mastery
 											bonus2 bWeaponDamageRate,W_BOOK,max(1,(.@m*3+50)/100);
+										} else if (.@id == 392) {	// Arcane Siphon
+											bonus bSPGainValue,max(1,(.@m*6+50)/100);
+											bonus2 bRegenPercentSP,max(1,(.@m*1+50)/100),8000;
+										}
+									} else {
+										if (.@id == 393) {	// Magic Damage
+											bonus2 bMagicAddRace,RC_All,max(1,(.@m*1+50)/100);
+										} else if (.@id == 394) {	// Cast Time
+											bonus bCastrate,min(-1,(.@m*(-1)-50)/100);
+										} else if (.@id == 396) {	// Staff Mastery
+											bonus2 bWeaponDamageRate,W_STAFF,max(1,(.@m*3+50)/100);
 										}
 									}
 								}
 							}
 						} else {
-							if (.@id <= 404) {
-								if (.@id <= 397) {
-									if (.@id <= 393) {
-										if (.@id == 392) {	// Arcane Siphon
-											bonus bSPGainValue,max(1,(.@m*6+50)/100);
-											bonus2 bRegenPercentSP,max(1,(.@m*1+50)/100),8000;
-										} else if (.@id == 393) {	// Magic Damage
-											bonus2 bMagicAddRace,RC_All,max(1,(.@m*1+50)/100);
-										}
-									} else {
-										if (.@id == 394) {	// Cast Time
-											bonus bCastrate,min(-1,(.@m*(-1)-50)/100);
-										} else if (.@id == 396) {	// Staff Mastery
-											bonus2 bWeaponDamageRate,W_STAFF,max(1,(.@m*3+50)/100);
-										} else if (.@id == 397) {	// Frostbite
+							if (.@id <= 408) {
+								if (.@id <= 402) {
+									if (.@id <= 398) {
+										if (.@id == 397) {	// Frostbite
 											bonus2 bAddEff,Eff_Freeze,max(1,(.@m*500+50)/100);
 											bonus2 bMagicAtkEle,Ele_Water,max(1,(.@m*8+50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 400) {
-										if (.@id == 398) {	// Spell Guard
+										} else if (.@id == 398) {	// Spell Guard
 											bonus bMagicAtkDef,max(1,(.@m*2+50)/100);
-										} else if (.@id == 399) {	// Storm Caller
+										}
+									} else {
+										if (.@id == 399) {	// Storm Caller
 											bonus3 bAutoSpell,"MG_THUNDERSTORM",3,max(1,(.@m*20+50)/100);
 											bonus2 bMagicAtkEle,Ele_Wind,max(1,(.@m*8+50)/100);
 										} else if (.@id == 400) {	// Meditation
 											bonus2 bRegenPercentSP,max(1,(.@m*1+50)/100),12000;
-										}
-									} else {
-										if (.@id == 402) {	// Cast Time
+										} else if (.@id == 402) {	// Cast Time
 											bonus bCastrate,min(-1,(.@m*(-1)-50)/100);
-										} else if (.@id == 403) {	// Mana Siphon
+										}
+									}
+								} else {
+									if (.@id <= 405) {
+										if (.@id == 403) {	// Mana Siphon
 											bonus bSPGainValue,max(1,(.@m*3+50)/100);
 										} else if (.@id == 404) {	// Gemstone Mastery
 											bonus bNoGemStone;
 											bonus bMatk,max(1,(.@m*12+50)/100);
+										} else if (.@id == 405) {	// SP Cost
+											bonus bUseSPrate,min(-1,(.@m*(-1)-50)/100);
+										}
+									} else {
+										if (.@id == 406) {	// Spell Guard
+											bonus bMagicAtkDef,max(1,(.@m*2+50)/100);
+										} else if (.@id == 407) {	// Critical
+											bonus bCritical,max(1,(.@m*2+50)/100);
+										} else if (.@id == 408) {	// Accuracy
+											bonus bHit,max(1,(.@m*5+50)/100);
 										}
 									}
 								}
 							} else {
-								if (.@id <= 409) {
-									if (.@id <= 406) {
-										if (.@id == 405) {	// SP Cost
-											bonus bUseSPrate,min(-1,(.@m*(-1)-50)/100);
-										} else if (.@id == 406) {	// Spell Guard
-											bonus bMagicAtkDef,max(1,(.@m*2+50)/100);
-										}
-									} else {
-										if (.@id == 407) {	// Critical
-											bonus bCritical,max(1,(.@m*2+50)/100);
-										} else if (.@id == 408) {	// Accuracy
-											bonus bHit,max(1,(.@m*5+50)/100);
-										} else if (.@id == 409) {	// Crippling Shot
+								if (.@id <= 415) {
+									if (.@id <= 411) {
+										if (.@id == 409) {	// Crippling Shot
 											bonus2 bAddEff,Eff_Blind,max(1,(.@m*600+50)/100);
 											bonus bLongAtkRate,max(1,(.@m*5+50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 413) {
-										if (.@id == 410) {	// Attack Speed
+										} else if (.@id == 410) {	// Attack Speed
 											bonus bAspdRate,max(1,(.@m*1+50)/100);
 										} else if (.@id == 411) {	// Blind Ward
 											bonus2 bResEff,Eff_Blind,max(1,(.@m*400+50)/100);
-										} else if (.@id == 413) {	// Ranged Damage
-											bonus bLongAtkRate,max(1,(.@m*2+50)/100);
 										}
 									} else {
-										if (.@id == 414) {	// Falconry
+										if (.@id == 413) {	// Ranged Damage
+											bonus bLongAtkRate,max(1,(.@m*2+50)/100);
+										} else if (.@id == 414) {	// Falconry
 											if (checkfalcon()) bonus3 bAutoSpell,"HT_BLITZBEAT",3,max(1,(.@m*40+50)/100);
 											bonus2 bSkillAtk,"HT_BLITZBEAT",max(1,(.@m*8+50)/100);
 										} else if (.@id == 415) {	// Critical
 											bonus bCritical,max(1,(.@m*2+50)/100);
-										} else if (.@id == 416) {	// Trapper
+										}
+									}
+								} else {
+									if (.@id <= 419) {
+										if (.@id == 416) {	// Trapper
 											bonus2 bSkillAtk,"HT_BLASTMINE",max(1,(.@m*8+50)/100);
 											bonus2 bSkillAtk,"HT_CLAYMORETRAP",max(1,(.@m*8+50)/100);
 											bonus2 bSkillAtk,"HT_LANDMINE",max(1,(.@m*8+50)/100);
-										}
-									}
-								}
-							}
-						}
-					} else {
-						if (.@id <= 441) {
-							if (.@id <= 428) {
-								if (.@id <= 422) {
-									if (.@id <= 419) {
-										if (.@id == 417) {	// Ranged Guard
+										} else if (.@id == 417) {	// Ranged Guard
 											bonus bLongAtkDef,max(1,(.@m*2+50)/100);
 										} else if (.@id == 419) {	// Blind Ward
 											bonus2 bResEff,Eff_Blind,max(1,(.@m*400+50)/100);
@@ -3345,30 +3355,34 @@ function	script	F_PT_Bonus	{
 											bonus2 bWeaponDamageRate,W_BOW,max(1,(.@m*3+50)/100);
 										}
 									}
-								} else {
-									if (.@id <= 425) {
+								}
+							}
+						}
+					} else {
+						if (.@id <= 447) {
+							if (.@id <= 434) {
+								if (.@id <= 427) {
+									if (.@id <= 424) {
 										if (.@id == 423) {	// Critical
 											bonus bCritical,max(1,(.@m*2+50)/100);
 										} else if (.@id == 424) {	// Evasion
 											bonus bFlee,max(1,(.@m*5+50)/100);
-										} else if (.@id == 425) {	// Double Attack
-											bonus bDoubleAddRate,max(1,(.@m*2+50)/100);
 										}
 									} else {
-										if (.@id == 426) {	// Open Wounds
+										if (.@id == 425) {	// Double Attack
+											bonus bDoubleAddRate,max(1,(.@m*2+50)/100);
+										} else if (.@id == 426) {	// Open Wounds
 											bonus2 bAddEff,Eff_Bleeding,max(1,(.@m*800+50)/100);
 											bonus bCritAtkRate,max(1,(.@m*8+50)/100);
 										} else if (.@id == 427) {	// Critical Damage
 											bonus bCritAtkRate,max(1,(.@m*3+50)/100);
-										} else if (.@id == 428) {	// Dagger Mastery
-											bonus2 bWeaponDamageRate,W_DAGGER,max(1,(.@m*3+50)/100);
 										}
 									}
-								}
-							} else {
-								if (.@id <= 434) {
+								} else {
 									if (.@id <= 431) {
-										if (.@id == 430) {	// Ranged Guard
+										if (.@id == 428) {	// Dagger Mastery
+											bonus2 bWeaponDamageRate,W_DAGGER,max(1,(.@m*3+50)/100);
+										} else if (.@id == 430) {	// Ranged Guard
 											bonus bLongAtkDef,max(1,(.@m*2+50)/100);
 										} else if (.@id == 431) {	// Envenom
 											bonus2 bAddEff,Eff_Poison,max(1,(.@m*1000+50)/100);
@@ -3385,33 +3399,31 @@ function	script	F_PT_Bonus	{
 											bonus2 bAddEff,Eff_Bleeding,max(1,(.@m*300+50)/100);
 										}
 									}
-								} else {
-									if (.@id <= 438) {
+								}
+							} else {
+								if (.@id <= 440) {
+									if (.@id <= 437) {
 										if (.@id == 436) {	// Dagger Mastery
 											bonus2 bWeaponDamageRate,W_DAGGER,max(1,(.@m*3+50)/100);
 										} else if (.@id == 437) {	// Poison Strike
 											bonus2 bAddEff,Eff_Poison,max(1,(.@m*300+50)/100);
-										} else if (.@id == 438) {	// Cutthroat
+										}
+									} else {
+										if (.@id == 438) {	// Cutthroat
 											bonus2 bWeaponDamageRate,W_DAGGER,max(1,(.@m*8+50)/100);
 											bonus2 bWeaponDamageRate,W_KATAR,max(1,(.@m*8+50)/100);
 											bonus2 bHPDrainRate,max(1,(.@m*80+50)/100),5;
-										}
-									} else {
-										if (.@id == 439) {	// Katar Mastery
+										} else if (.@id == 439) {	// Katar Mastery
 											bonus2 bWeaponDamageRate,W_KATAR,max(1,(.@m*3+50)/100);
 										} else if (.@id == 440) {	// Evasion
 											bonus bFlee,max(1,(.@m*5+50)/100);
-										} else if (.@id == 441) {	// Drop Rate
-											.@drop += max(1,(.@m*10+50)/100);
 										}
 									}
-								}
-							}
-						} else {
-							if (.@id <= 454) {
-								if (.@id <= 447) {
+								} else {
 									if (.@id <= 443) {
-										if (.@id == 442) {	// Zeny on Kill
+										if (.@id == 441) {	// Drop Rate
+											.@drop += max(1,(.@m*10+50)/100);
+										} else if (.@id == 442) {	// Zeny on Kill
 											bonus2 bGetZenyNum,300,max(1,(.@m*5+50)/100);
 										} else if (.@id == 443) {	// Pickpocket's Purse
 											bonus2 bGetZenyNum,800,max(1,(.@m*10+50)/100);
@@ -3426,42 +3438,44 @@ function	script	F_PT_Bonus	{
 											bonus bAddItemHealRate,max(1,(.@m*4+50)/100);
 										}
 									}
-								} else {
-									if (.@id <= 450) {
+								}
+							}
+						} else {
+							if (.@id <= 459) {
+								if (.@id <= 453) {
+									if (.@id <= 449) {
 										if (.@id == 448) {	// Merchant Prince
 											.@drop += max(1,(.@m*5+50)/100);
 											bonus2 bExpAddRace,RC_All,max(1,(.@m*4+50)/100);
 											bonus bAddMaxWeight,max(1,(.@m*3000+50)/100);
 										} else if (.@id == 449) {	// Drop Rate
 											.@drop += max(1,(.@m*10+50)/100);
-										} else if (.@id == 450) {	// Bulk Discount
-											bonus bAddItemHealRate,max(1,(.@m*12+50)/100);
-											bonus bAddItemSPHealRate,max(1,(.@m*12+50)/100);
 										}
 									} else {
-										if (.@id == 451) {	// Two-handed Axe Mastery
+										if (.@id == 450) {	// Bulk Discount
+											bonus bAddItemHealRate,max(1,(.@m*12+50)/100);
+											bonus bAddItemSPHealRate,max(1,(.@m*12+50)/100);
+										} else if (.@id == 451) {	// Two-handed Axe Mastery
 											bonus2 bWeaponDamageRate,W_2HAXE,max(1,(.@m*3+50)/100);
 										} else if (.@id == 453) {	// Light Fingers
 											bonus bAddStealRate,max(1,(.@m*300+50)/100);
-										} else if (.@id == 454) {	// Carry Weight
-											bonus bAddMaxWeight,max(1,(.@m*1500+50)/100);
 										}
 									}
-								}
-							} else {
-								if (.@id <= 460) {
-									if (.@id <= 457) {
-										if (.@id == 455) {	// Golden Hammer
+								} else {
+									if (.@id <= 456) {
+										if (.@id == 454) {	// Carry Weight
+											bonus bAddMaxWeight,max(1,(.@m*1500+50)/100);
+										} else if (.@id == 455) {	// Golden Hammer
 											bonus2 bWeaponDamageRate,W_1HAXE,max(1,(.@m*8+50)/100);
 											bonus2 bWeaponDamageRate,W_2HAXE,max(1,(.@m*8+50)/100);
 											bonus2 bSkillAtk,"BS_HAMMERFALL",max(1,(.@m*10+50)/100);
 										} else if (.@id == 456) {	// Axe Mastery
 											bonus2 bWeaponDamageRate,W_1HAXE,max(1,(.@m*3+50)/100);
-										} else if (.@id == 457) {	// Drop Rate
-											.@drop += max(1,(.@m*10+50)/100);
 										}
 									} else {
-										if (.@id == 458) {	// Bulwark of Ages
+										if (.@id == 457) {	// Drop Rate
+											.@drop += max(1,(.@m*10+50)/100);
+										} else if (.@id == 458) {	// Bulwark of Ages
 											bonus bAbsorbDmgMaxHP2,max(1,(.@m*25+50)/100);
 											bonus bNoKnockback;
 											bonus2 bAddRace,RC_All,min(-1,(.@m*(-20)-50)/100);
@@ -3469,15 +3483,17 @@ function	script	F_PT_Bonus	{
 											bonus2 bHPDrainRate,max(1,(.@m*200+50)/100),10;
 											bonus bHealPower2,min(-1,(.@m*(-30)-50)/100);
 											bonus bAddItemHealRate,min(-1,(.@m*(-30)-50)/100);
-										} else if (.@id == 460) {	// Gemless Grace
+										}
+									}
+								}
+							} else {
+								if (.@id <= 465) {
+									if (.@id <= 462) {
+										if (.@id == 460) {	// Gemless Grace
 											bonus bNoGemStone;
 											bonus2 bMagicAddRace,RC_All,max(1,(.@m*10+50)/100);
 											bonus bMaxSPrate,min(-1,(.@m*(-25)-50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 463) {
-										if (.@id == 461) {	// Gambler's Fallacy
+										} else if (.@id == 461) {	// Gambler's Fallacy
 											bonus bCritAtkRate,max(1,(.@m*30+50)/100);
 											bonus bCritical,max(1,(.@m*20+50)/100);
 											bonus bHit,min(-1,(.@m*(-20)-50)/100);
@@ -3485,31 +3501,23 @@ function	script	F_PT_Bonus	{
 											bonus bAtkEle,Ele_Fire;
 											bonus2 bMagicAtkEle,Ele_Fire,max(1,(.@m*25+50)/100);
 											bonus2 bSubEle,Ele_Water,min(-1,(.@m*(-25)-50)/100);
-										} else if (.@id == 463) {	// Glass Cannon
+										}
+									} else {
+										if (.@id == 463) {	// Glass Cannon
 											bonus2 bAddRace,RC_All,max(1,(.@m*40+50)/100);
 											bonus2 bMagicAddRace,RC_All,max(1,(.@m*40+50)/100);
 											bonus2 bSubRace,RC_All,min(-1,(.@m*(-40)-50)/100);
-										}
-									} else {
-										if (.@id == 464) {	// Spear Mastery
+										} else if (.@id == 464) {	// Spear Mastery
 											bonus2 bWeaponDamageRate,W_1HSPEAR,max(1,(.@m*3+50)/100);
 										} else if (.@id == 465) {	// Spear Mastery
 											bonus2 bWeaponDamageRate,W_1HSPEAR,max(1,(.@m*3+50)/100);
-										} else if (.@id == 466) {	// Potion Efficiency
-											bonus bAddItemSPHealRate,max(1,(.@m*5+50)/100);
 										}
 									}
-								}
-							}
-						}
-					}
-				} else {
-					if (.@id <= 511) {
-						if (.@id <= 488) {
-							if (.@id <= 477) {
-								if (.@id <= 471) {
+								} else {
 									if (.@id <= 468) {
-										if (.@id == 467) {	// Potion Efficiency
+										if (.@id == 466) {	// Potion Efficiency
+											bonus bAddItemSPHealRate,max(1,(.@m*5+50)/100);
+										} else if (.@id == 467) {	// Potion Efficiency
 											bonus bAddItemSPHealRate,max(1,(.@m*5+50)/100);
 										} else if (.@id == 468) {	// SP Cost
 											bonus bUseSPrate,min(-1,(.@m*(-1)-50)/100);
@@ -3523,29 +3531,35 @@ function	script	F_PT_Bonus	{
 											bonus2 bWeaponDamageRate,W_BOW,max(1,(.@m*3+50)/100);
 										}
 									}
-								} else {
-									if (.@id <= 474) {
+								}
+							}
+						}
+					}
+				} else {
+					if (.@id <= 516) {
+						if (.@id <= 493) {
+							if (.@id <= 482) {
+								if (.@id <= 476) {
+									if (.@id <= 473) {
 										if (.@id == 472) {	// Katar Mastery
 											bonus2 bWeaponDamageRate,W_KATAR,max(1,(.@m*3+50)/100);
 										} else if (.@id == 473) {	// Katar Mastery
 											bonus2 bWeaponDamageRate,W_KATAR,max(1,(.@m*3+50)/100);
-										} else if (.@id == 474) {	// Axe Mastery
-											bonus2 bWeaponDamageRate,W_1HAXE,max(1,(.@m*3+50)/100);
 										}
 									} else {
-										if (.@id == 475) {	// Axe Mastery
+										if (.@id == 474) {	// Axe Mastery
+											bonus2 bWeaponDamageRate,W_1HAXE,max(1,(.@m*3+50)/100);
+										} else if (.@id == 475) {	// Axe Mastery
 											bonus2 bWeaponDamageRate,W_1HAXE,max(1,(.@m*3+50)/100);
 										} else if (.@id == 476) {	// Max HP
 											bonus bMaxHP,max(1,(.@m*120+50)/100);
-										} else if (.@id == 477) {	// Pierce
-											bonus2 bSkillAtk,"KN_PIERCE",max(1,(.@m*5+50)/100);
 										}
 									}
-								}
-							} else {
-								if (.@id <= 482) {
+								} else {
 									if (.@id <= 479) {
-										if (.@id == 478) {	// Brandish Spear
+										if (.@id == 477) {	// Pierce
+											bonus2 bSkillAtk,"KN_PIERCE",max(1,(.@m*5+50)/100);
+										} else if (.@id == 478) {	// Brandish Spear
 											bonus2 bSkillAtk,"KN_BRANDISHSPEAR",max(1,(.@m*5+50)/100);
 										} else if (.@id == 479) {	// Lancer's Discipline
 											bonus2 bSkillAtk,"KN_SPEARBOOMERANG",max(1,(.@m*8+50)/100);
@@ -3564,8 +3578,10 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"CR_HOLYCROSS",max(1,(.@m*5+50)/100);
 										}
 									}
-								} else {
-									if (.@id <= 485) {
+								}
+							} else {
+								if (.@id <= 487) {
+									if (.@id <= 484) {
 										if (.@id == 483) {	// Faith Shield
 											bonus bShortWeaponDamageReturn,max(1,(.@m*6+50)/100);
 											bonus2 bSubEle,Ele_Holy,max(1,(.@m*10+50)/100);
@@ -3574,27 +3590,23 @@ function	script	F_PT_Bonus	{
 											bonus2 bSubRace,RC_All,max(1,(.@m*5+50)/100);
 											bonus bMaxHPrate,max(1,(.@m*8+50)/100);
 											bonus2 bSkillAtk,"CR_GRANDCROSS",max(1,(.@m*10+50)/100);
-										} else if (.@id == 485) {	// Max HP
-											bonus bMaxHP,max(1,(.@m*120+50)/100);
 										}
 									} else {
-										if (.@id == 486) {	// Sanctuary
+										if (.@id == 485) {	// Max HP
+											bonus bMaxHP,max(1,(.@m*120+50)/100);
+										} else if (.@id == 486) {	// Sanctuary
 											bonus2 bSkillHeal,"PR_SANCTUARY",max(1,(.@m*8+50)/100);
 										} else if (.@id == 487) {	// Magnus Exorcismus
 											bonus2 bSkillAtk,"PR_MAGNUS",max(1,(.@m*6+50)/100);
-										} else if (.@id == 488) {	// Clergy's Mercy
+										}
+									}
+								} else {
+									if (.@id <= 490) {
+										if (.@id == 488) {	// Clergy's Mercy
 											bonus bHealPower,max(1,(.@m*12+50)/100);
 											bonus bHealPower2,max(1,(.@m*8+50)/100);
 											bonus2 bRegenPercentHP,max(1,(.@m*1+50)/100),8000;
-										}
-									}
-								}
-							}
-						} else {
-							if (.@id <= 499) {
-								if (.@id <= 493) {
-									if (.@id <= 490) {
-										if (.@id == 489) {	// High Priest's Light
+										} else if (.@id == 489) {	// High Priest's Light
 											bonus2 bSkillHeal,"AL_HEAL",max(1,(.@m*15+50)/100);
 											bonus2 bSkillAtk,"PR_TURNUNDEAD",max(1,(.@m*10+50)/100);
 											bonus2 bSkillUseSPrate,"PR_SANCTUARY",max(1,(.@m*10+50)/100);
@@ -3614,17 +3626,21 @@ function	script	F_PT_Bonus	{
 											bonus bMaxHPrate,max(1,(.@m*6+50)/100);
 										}
 									}
-								} else {
-									if (.@id <= 496) {
+								}
+							}
+						} else {
+							if (.@id <= 504) {
+								if (.@id <= 498) {
+									if (.@id <= 495) {
 										if (.@id == 494) {	// Max HP
 											bonus bMaxHP,max(1,(.@m*120+50)/100);
 										} else if (.@id == 495) {	// Storm Gust
 											bonus2 bSkillAtk,"WZ_STORMGUST",max(1,(.@m*5+50)/100);
-										} else if (.@id == 496) {	// Lord of Vermilion
-											bonus2 bSkillAtk,"WZ_VERMILION",max(1,(.@m*5+50)/100);
 										}
 									} else {
-										if (.@id == 497) {	// Storm Mastery
+										if (.@id == 496) {	// Lord of Vermilion
+											bonus2 bSkillAtk,"WZ_VERMILION",max(1,(.@m*5+50)/100);
+										} else if (.@id == 497) {	// Storm Mastery
 											bonus2 bSkillAtk,"WZ_STORMGUST",max(1,(.@m*8+50)/100);
 											bonus2 bSkillAtk,"WZ_METEOR",max(1,(.@m*8+50)/100);
 											bonus bCastrate,min(-1,(.@m*(-5)-50)/100);
@@ -3632,37 +3648,37 @@ function	script	F_PT_Bonus	{
 											bonus bMatkRate,max(1,(.@m*8+50)/100);
 											bonus2 bMagicAddRace,RC_All,max(1,(.@m*6+50)/100);
 											bonus3 bAutoSpell,"WZ_VERMILION",3,max(1,(.@m*20+50)/100);
-										} else if (.@id == 499) {	// Fire Ball
-											bonus2 bSkillAtk,"MG_FIREBALL",max(1,(.@m*5+50)/100);
 										}
 									}
-								}
-							} else {
-								if (.@id <= 505) {
-									if (.@id <= 502) {
-										if (.@id == 500) {	// Thunder Storm
+								} else {
+									if (.@id <= 501) {
+										if (.@id == 499) {	// Fire Ball
+											bonus2 bSkillAtk,"MG_FIREBALL",max(1,(.@m*5+50)/100);
+										} else if (.@id == 500) {	// Thunder Storm
 											bonus2 bSkillAtk,"MG_THUNDERSTORM",max(1,(.@m*5+50)/100);
 										} else if (.@id == 501) {	// Scholar's Insight
 											bonus bMaxSPrate,max(1,(.@m*6+50)/100);
 											bonus bSPrecovRate,max(1,(.@m*10+50)/100);
 											bonus2 bMagicAtkEle,Ele_Earth,max(1,(.@m*4+50)/100);
-										} else if (.@id == 502) {	// Professor's Wit
+										}
+									} else {
+										if (.@id == 502) {	// Professor's Wit
 											bonus3 bAutoSpell,"MG_SOULSTRIKE",5,max(1,(.@m*50+50)/100);
 											bonus bCastrate,min(-1,(.@m*(-6)-50)/100);
 											bonus bMatk,max(1,(.@m*15+50)/100);
-										}
-									} else {
-										if (.@id == 503) {	// Max HP
+										} else if (.@id == 503) {	// Max HP
 											bonus bMaxHP,max(1,(.@m*120+50)/100);
 										} else if (.@id == 504) {	// Land Mine
 											bonus2 bSkillAtk,"HT_LANDMINE",max(1,(.@m*6+50)/100);
-										} else if (.@id == 505) {	// Freezing Trap
-											bonus2 bSkillAtk,"HT_FREEZINGTRAP",max(1,(.@m*6+50)/100);
 										}
 									}
-								} else {
-									if (.@id <= 508) {
-										if (.@id == 506) {	// Trapmaster
+								}
+							} else {
+								if (.@id <= 510) {
+									if (.@id <= 507) {
+										if (.@id == 505) {	// Freezing Trap
+											bonus2 bSkillAtk,"HT_FREEZINGTRAP",max(1,(.@m*6+50)/100);
+										} else if (.@id == 506) {	// Trapmaster
 											bonus2 bSkillAtk,"HT_BLASTMINE",max(1,(.@m*8+50)/100);
 											bonus2 bSkillAtk,"HT_CLAYMORETRAP",max(1,(.@m*8+50)/100);
 											bonus bDoubleAddRate,max(1,(.@m*4+50)/100);
@@ -3671,31 +3687,25 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"SN_SHARPSHOOTING",max(1,(.@m*10+50)/100);
 											bonus bCritical,max(1,(.@m*8+50)/100);
 											bonus bCritAtkRate,max(1,(.@m*10+50)/100);
-										} else if (.@id == 508) {	// Melody Strike
-											bonus2 bSkillAtk,"BA_MUSICALSTRIKE",max(1,(.@m*6+50)/100);
 										}
 									} else {
-										if (.@id == 509) {	// Slinging Arrow
+										if (.@id == 508) {	// Melody Strike
+											bonus2 bSkillAtk,"BA_MUSICALSTRIKE",max(1,(.@m*6+50)/100);
+										} else if (.@id == 509) {	// Slinging Arrow
 											bonus2 bSkillAtk,"DC_THROWARROW",max(1,(.@m*6+50)/100);
 										} else if (.@id == 510) {	// Performer
 											bonus bMaxSPrate,max(1,(.@m*6+50)/100);
 											bonus bSPrecovRate,max(1,(.@m*8+50)/100);
 											bonus bAspdRate,max(1,(.@m*3+50)/100);
-										} else if (.@id == 511) {	// Maestro
+										}
+									}
+								} else {
+									if (.@id <= 513) {
+										if (.@id == 511) {	// Maestro
 											bonus2 bSkillAtk,"BA_MUSICALSTRIKE",max(1,(.@m*10+50)/100);
 											bonus2 bSkillAtk,"DC_THROWARROW",max(1,(.@m*10+50)/100);
 											bonus bFlee,max(1,(.@m*10+50)/100);
-										}
-									}
-								}
-							}
-						}
-					} else {
-						if (.@id <= 533) {
-							if (.@id <= 522) {
-								if (.@id <= 516) {
-									if (.@id <= 513) {
-										if (.@id == 512) {	// Max HP
+										} else if (.@id == 512) {	// Max HP
 											bonus bMaxHP,max(1,(.@m*120+50)/100);
 										} else if (.@id == 513) {	// Venom Knife
 											bonus2 bSkillAtk,"AS_VENOMKNIFE",max(1,(.@m*5+50)/100);
@@ -3714,33 +3724,37 @@ function	script	F_PT_Bonus	{
 											bonus2 bAddEff,Eff_Poison,max(1,(.@m*800+50)/100);
 										}
 									}
-								} else {
-									if (.@id <= 519) {
+								}
+							}
+						}
+					} else {
+						if (.@id <= 539) {
+							if (.@id <= 527) {
+								if (.@id <= 521) {
+									if (.@id <= 518) {
 										if (.@id == 517) {	// Back Stab
 											bonus2 bSkillAtk,"RG_BACKSTAP",max(1,(.@m*6+50)/100);
 										} else if (.@id == 518) {	// Raid
 											bonus2 bSkillAtk,"RG_RAID",max(1,(.@m*6+50)/100);
-										} else if (.@id == 519) {	// Plunder
+										}
+									} else {
+										if (.@id == 519) {	// Plunder
 											bonus bAddStealRate,max(1,(.@m*1000+50)/100);
 											bonus2 bGetZenyNum,600,max(1,(.@m*8+50)/100);
 											bonus bFlee,max(1,(.@m*8+50)/100);
-										}
-									} else {
-										if (.@id == 520) {	// Master Thief
+										} else if (.@id == 520) {	// Master Thief
 											bonus2 bSkillAtk,"RG_BACKSTAP",max(1,(.@m*10+50)/100);
 											bonus bFlee,max(1,(.@m*10+50)/100);
 											bonus bAddStealRate,max(1,(.@m*1000+50)/100);
 										} else if (.@id == 521) {	// Max HP
 											bonus bMaxHP,max(1,(.@m*120+50)/100);
-										} else if (.@id == 522) {	// Hammer Fall
-											bonus2 bSkillAtk,"BS_HAMMERFALL",max(1,(.@m*6+50)/100);
 										}
 									}
-								}
-							} else {
-								if (.@id <= 527) {
+								} else {
 									if (.@id <= 524) {
-										if (.@id == 523) {	// Cart Termination
+										if (.@id == 522) {	// Hammer Fall
+											bonus2 bSkillAtk,"BS_HAMMERFALL",max(1,(.@m*6+50)/100);
+										} else if (.@id == 523) {	// Cart Termination
 											bonus2 bSkillAtk,"WS_CARTTERMINATION",max(1,(.@m*6+50)/100);
 										} else if (.@id == 524) {	// Forgemaster
 											bonus2 bWeaponDamageRate,W_1HAXE,max(1,(.@m*8+50)/100);
@@ -3759,7 +3773,9 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"AM_DEMONSTRATION",max(1,(.@m*6+50)/100);
 										}
 									}
-								} else {
+								}
+							} else {
+								if (.@id <= 533) {
 									if (.@id <= 530) {
 										if (.@id == 528) {	// Potion Lore
 											bonus2 bSkillHeal,"AM_POTIONPITCHER",max(1,(.@m*10+50)/100);
@@ -3784,33 +3800,33 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"KN_BOWLINGBASH",max(1,(.@m*10+50)/100);
 										}
 									}
-								}
-							}
-						} else {
-							if (.@id <= 544) {
-								if (.@id <= 538) {
-									if (.@id <= 535) {
+								} else {
+									if (.@id <= 536) {
 										if (.@id == 534) {	// Endure
 											.@l = getskilllv(8); if (.@l > 0 && .@l < 13) addtoskill 8,min(13-.@l,max(1,(.@m*1+50)/100));
 										} else if (.@id == 535) {	// Provoke
 											.@l = getskilllv(6); if (.@l > 0 && .@l < 13) addtoskill 6,min(13-.@l,max(1,(.@m*1+50)/100));
+										} else if (.@id == 536) {	// Provoke
+											bonus2 bSkillUseSPrate,"SM_PROVOKE",max(1,(.@m*10+50)/100);
 										}
 									} else {
-										if (.@id == 536) {	// Provoke
-											bonus2 bSkillUseSPrate,"SM_PROVOKE",max(1,(.@m*10+50)/100);
-										} else if (.@id == 537) {	// Steadfast
+										if (.@id == 537) {	// Steadfast
 											.@l = getskilllv(8); if (.@l > 0 && .@l < 13) addtoskill 8,min(13-.@l,max(1,(.@m*2+50)/100));
 											bonus bHPrecovRate,max(1,(.@m*10+50)/100);
 											bonus2 bSubRace,RC_All,max(1,(.@m*3+50)/100);
 										} else if (.@id == 538) {	// Spear Stab
 											bonus2 bSkillAtk,"KN_SPEARSTAB",max(1,(.@m*10+50)/100);
+										} else if (.@id == 539) {	// Spear Boomerang
+											bonus2 bSkillAtk,"KN_SPEARBOOMERANG",max(1,(.@m*10+50)/100);
 										}
 									}
-								} else {
+								}
+							}
+						} else {
+							if (.@id <= 550) {
+								if (.@id <= 544) {
 									if (.@id <= 541) {
-										if (.@id == 539) {	// Spear Boomerang
-											bonus2 bSkillAtk,"KN_SPEARBOOMERANG",max(1,(.@m*10+50)/100);
-										} else if (.@id == 540) {	// Shield Charge
+										if (.@id == 540) {	// Shield Charge
 											bonus2 bSkillAtk,"CR_SHIELDCHARGE",max(1,(.@m*10+50)/100);
 										} else if (.@id == 541) {	// Lance Specialist
 											bonus2 bSkillAtk,"KN_SPEARSTAB",max(1,(.@m*18+50)/100);
@@ -3826,9 +3842,7 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"MO_FINGEROFFENSIVE",max(1,(.@m*6+50)/100);
 										}
 									}
-								}
-							} else {
-								if (.@id <= 550) {
+								} else {
 									if (.@id <= 547) {
 										if (.@id == 545) {	// Smite
 											bonus4 bAutoSpellOnSkill,"AL_HOLYLIGHT","AL_HOLYLIGHT",1,max(1,(.@m*50+50)/100);
@@ -3852,7 +3866,9 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"PR_TURNUNDEAD",max(1,(.@m*10+50)/100);
 										}
 									}
-								} else {
+								}
+							} else {
+								if (.@id <= 556) {
 									if (.@id <= 553) {
 										if (.@id == 551) {	// Signum Crucis
 											bonus2 bSkillUseSPrate,"AL_CRUCIS",max(1,(.@m*15+50)/100);
@@ -3872,18 +3888,8 @@ function	script	F_PT_Bonus	{
 											bonus2 bCastrate,"MG_SOULSTRIKE",min(-1,(.@m*(-6)-50)/100);
 										}
 									}
-								}
-							}
-						}
-					}
-				}
-			} else {
-				if (.@id <= 646) {
-					if (.@id <= 601) {
-						if (.@id <= 578) {
-							if (.@id <= 567) {
-								if (.@id <= 561) {
-									if (.@id <= 558) {
+								} else {
+									if (.@id <= 559) {
 										if (.@id == 557) {	// Cantrip Mastery
 											bonus4 bAutoSpellOnSkill,"MG_NAPALMBEAT","MG_NAPALMBEAT",5,max(1,(.@m*50+50)/100);
 											bonus4 bAutoSpellOnSkill,"MG_SOULSTRIKE","MG_SOULSTRIKE",5,max(1,(.@m*50+50)/100);
@@ -3892,23 +3898,33 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillUseSPrate,"MG_NAPALMBEAT",max(1,(.@m*10+50)/100);
 										} else if (.@id == 558) {	// Safety Wall
 											bonus2 bSkillUseSPrate,"MG_SAFETYWALL",max(1,(.@m*10+50)/100);
+										} else if (.@id == 559) {	// Safety Wall
+											.@l = getskilllv(12); if (.@l > 0 && .@l < 13) addtoskill 12,min(13-.@l,max(1,(.@m*1+50)/100));
 										}
 									} else {
-										if (.@id == 559) {	// Safety Wall
-											.@l = getskilllv(12); if (.@l > 0 && .@l < 13) addtoskill 12,min(13-.@l,max(1,(.@m*1+50)/100));
-										} else if (.@id == 560) {	// SP Recovery
+										if (.@id == 560) {	// SP Recovery
 											bonus bSPrecovRate,max(1,(.@m*8+50)/100);
 										} else if (.@id == 561) {	// Warding Arts
 											.@l = getskilllv(12); if (.@l > 0 && .@l < 13) addtoskill 12,min(13-.@l,max(1,(.@m*2+50)/100));
 											bonus bUseSPrate,min(-1,(.@m*(-4)-50)/100);
 											bonus bMaxSPrate,max(1,(.@m*3+50)/100);
+										} else if (.@id == 562) {	// Frost Diver
+											bonus2 bSkillAtk,"MG_FROSTDIVER",max(1,(.@m*10+50)/100);
 										}
 									}
-								} else {
+								}
+							}
+						}
+					}
+				}
+			} else {
+				if (.@id <= 653) {
+					if (.@id <= 607) {
+						if (.@id <= 584) {
+							if (.@id <= 573) {
+								if (.@id <= 567) {
 									if (.@id <= 564) {
-										if (.@id == 562) {	// Frost Diver
-											bonus2 bSkillAtk,"MG_FROSTDIVER",max(1,(.@m*10+50)/100);
-										} else if (.@id == 563) {	// Fire Wall
+										if (.@id == 563) {	// Fire Wall
 											bonus2 bSkillAtk,"MG_FIREWALL",max(1,(.@m*10+50)/100);
 										} else if (.@id == 564) {	// Frost Nova
 											bonus2 bSkillAtk,"WZ_FROSTNOVA",max(1,(.@m*10+50)/100);
@@ -3924,10 +3940,8 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"AC_CHARGEARROW",max(1,(.@m*6+50)/100);
 										}
 									}
-								}
-							} else {
-								if (.@id <= 572) {
-									if (.@id <= 569) {
+								} else {
+									if (.@id <= 570) {
 										if (.@id == 568) {	// Arrow Shower
 											bonus2 bSkillUseSPrate,"AC_SHOWER",max(1,(.@m*8+50)/100);
 										} else if (.@id == 569) {	// Volley Mastery
@@ -3935,23 +3949,25 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"AC_SHOWER",max(1,(.@m*12+50)/100);
 											bonus2 bSkillAtk,"AC_CHARGEARROW",max(1,(.@m*12+50)/100);
 											bonus bAspdRate,max(1,(.@m*2+50)/100);
+										} else if (.@id == 570) {	// Improve Concentration
+											.@l = getskilllv(45); if (.@l > 0 && .@l < 13) addtoskill 45,min(13-.@l,max(1,(.@m*1+50)/100));
 										}
 									} else {
-										if (.@id == 570) {	// Improve Concentration
-											.@l = getskilllv(45); if (.@l > 0 && .@l < 13) addtoskill 45,min(13-.@l,max(1,(.@m*1+50)/100));
-										} else if (.@id == 571) {	// Improve Concentration
+										if (.@id == 571) {	// Improve Concentration
 											bonus2 bSkillUseSPrate,"AC_CONCENTRATION",max(1,(.@m*10+50)/100);
 										} else if (.@id == 572) {	// Accuracy
 											bonus bHit,max(1,(.@m*6+50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 575) {
-										if (.@id == 573) {	// Steady Focus
+										} else if (.@id == 573) {	// Steady Focus
 											.@l = getskilllv(45); if (.@l > 0 && .@l < 13) addtoskill 45,min(13-.@l,max(1,(.@m*2+50)/100));
 											bonus bHit,max(1,(.@m*10+50)/100);
 											bonus bCritical,max(1,(.@m*4+50)/100);
-										} else if (.@id == 574) {	// Skid Trap
+										}
+									}
+								}
+							} else {
+								if (.@id <= 578) {
+									if (.@id <= 575) {
+										if (.@id == 574) {	// Skid Trap
 											bonus2 bSkillAtk,"HT_SKIDTRAP",max(1,(.@m*10+50)/100);
 										} else if (.@id == 575) {	// Sandman
 											bonus2 bSkillAtk,"HT_SANDMAN",max(1,(.@m*10+50)/100);
@@ -3967,34 +3983,34 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"TF_THROWSTONE",max(1,(.@m*6+50)/100);
 										}
 									}
-								}
-							}
-						} else {
-							if (.@id <= 589) {
-								if (.@id <= 583) {
-									if (.@id <= 580) {
+								} else {
+									if (.@id <= 581) {
 										if (.@id == 579) {	// Envenom
 											bonus2 bSkillAtk,"TF_POISON",max(1,(.@m*6+50)/100);
 										} else if (.@id == 580) {	// Grimtooth
 											bonus2 bSkillAtk,"AS_GRIMTOOTH",max(1,(.@m*6+50)/100);
-										}
-									} else {
-										if (.@id == 581) {	// Dirty Tricks
+										} else if (.@id == 581) {	// Dirty Tricks
 											bonus4 bAutoSpellOnSkill,"TF_POISON","TF_POISON",5,max(1,(.@m*40+50)/100);
 											bonus2 bSkillAtk,"TF_THROWSTONE",max(1,(.@m*14+50)/100);
 											bonus2 bSkillAtk,"TF_POISON",max(1,(.@m*12+50)/100);
 											bonus2 bSkillUseSPrate,"TF_POISON",max(1,(.@m*10+50)/100);
-										} else if (.@id == 582) {	// Cloaking
+										}
+									} else {
+										if (.@id == 582) {	// Cloaking
 											.@l = getskilllv(135); if (.@l > 0 && .@l < 13) addtoskill 135,min(13-.@l,max(1,(.@m*1+50)/100));
 										} else if (.@id == 583) {	// Cloaking
 											bonus2 bSkillUseSPrate,"AS_CLOAKING",max(1,(.@m*10+50)/100);
+										} else if (.@id == 584) {	// Enchant Poison
+											.@l = getskilllv(138); if (.@l > 0 && .@l < 13) addtoskill 138,min(13-.@l,max(1,(.@m*1+50)/100));
 										}
 									}
-								} else {
+								}
+							}
+						} else {
+							if (.@id <= 595) {
+								if (.@id <= 589) {
 									if (.@id <= 586) {
-										if (.@id == 584) {	// Enchant Poison
-											.@l = getskilllv(138); if (.@l > 0 && .@l < 13) addtoskill 138,min(13-.@l,max(1,(.@m*1+50)/100));
-										} else if (.@id == 585) {	// Shadow Arts
+										if (.@id == 585) {	// Shadow Arts
 											.@l = getskilllv(135); if (.@l > 0 && .@l < 13) addtoskill 135,min(13-.@l,max(1,(.@m*2+50)/100));
 											bonus bFlee,max(1,(.@m*8+50)/100);
 											bonus bSpeedAddRate,max(1,(.@m*4+50)/100);
@@ -4012,9 +4028,7 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"AS_SPLASHER",max(1,(.@m*15+50)/100);
 										}
 									}
-								}
-							} else {
-								if (.@id <= 595) {
+								} else {
 									if (.@id <= 592) {
 										if (.@id == 590) {	// Mammonite
 											bonus2 bSkillAtk,"MC_MAMMONITE",max(1,(.@m*6+50)/100);
@@ -4035,7 +4049,9 @@ function	script	F_PT_Bonus	{
 											.@l = getskilllv(113); if (.@l > 0 && .@l < 13) addtoskill 113,min(13-.@l,max(1,(.@m*1+50)/100));
 										}
 									}
-								} else {
+								}
+							} else {
+								if (.@id <= 601) {
 									if (.@id <= 598) {
 										if (.@id == 596) {	// Over Thrust
 											bonus2 bSkillUseSPrate,"BS_OVERTHRUST",max(1,(.@m*10+50)/100);
@@ -4057,37 +4073,37 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillHeal,"AM_POTIONPITCHER",max(1,(.@m*12+50)/100);
 										}
 									}
-								}
-							}
-						}
-					} else {
-						if (.@id <= 623) {
-							if (.@id <= 612) {
-								if (.@id <= 606) {
-									if (.@id <= 603) {
+								} else {
+									if (.@id <= 604) {
 										if (.@id == 602) {	// Bash Reflex
 											if ((.@w == W_FIST || .@w == W_DAGGER || .@w == W_1HSWORD || .@w == W_2HSWORD || .@w == W_1HSPEAR || .@w == W_2HSPEAR || .@w == W_1HAXE || .@w == W_2HAXE || .@w == W_MACE || .@w == W_2HMACE || .@w == W_STAFF || .@w == W_KNUCKLE || .@w == W_MUSICAL || .@w == W_WHIP || .@w == W_BOOK || .@w == W_KATAR || .@w == W_REVOLVER || .@w == W_RIFLE || .@w == W_GATLING || .@w == W_SHOTGUN || .@w == W_GRENADE || .@w == W_HUUMA)) bonus3 bAutoSpell,"SM_BASH",2,max(1,(.@m*30+50)/100);
 										} else if (.@id == 603) {	// Magnum Break Reflex
 											bonus3 bAutoSpell,"SM_MAGNUM",2,max(1,(.@m*30+50)/100);
-										}
-									} else {
-										if (.@id == 604) {	// Reckless Reflexes
+										} else if (.@id == 604) {	// Reckless Reflexes
 											bonus3 bAutoSpell,"KN_BOWLINGBASH",3,max(1,(.@m*30+50)/100);
 											if ((.@w == W_1HSPEAR || .@w == W_2HSPEAR)) bonus3 bAutoSpell,"KN_PIERCE",3,max(1,(.@m*30+50)/100);
 											if ((.@w == W_FIST || .@w == W_DAGGER || .@w == W_1HSWORD || .@w == W_2HSWORD || .@w == W_1HSPEAR || .@w == W_2HSPEAR || .@w == W_1HAXE || .@w == W_2HAXE || .@w == W_MACE || .@w == W_2HMACE || .@w == W_STAFF || .@w == W_KNUCKLE || .@w == W_MUSICAL || .@w == W_WHIP || .@w == W_BOOK || .@w == W_KATAR || .@w == W_REVOLVER || .@w == W_RIFLE || .@w == W_GATLING || .@w == W_SHOTGUN || .@w == W_GRENADE || .@w == W_HUUMA)) bonus3 bAutoSpell,"SM_BASH",5,max(1,(.@m*20+50)/100);
-										} else if (.@id == 605) {	// Spear Stab Reflex
+										}
+									} else {
+										if (.@id == 605) {	// Spear Stab Reflex
 											if ((.@w == W_1HSPEAR || .@w == W_2HSPEAR)) bonus3 bAutoSpell,"KN_SPEARSTAB",2,max(1,(.@m*30+50)/100);
 										} else if (.@id == 606) {	// Shield Boomerang Reflex
 											if (.@shield) bonus3 bAutoSpell,"CR_SHIELDBOOMERANG",2,max(1,(.@m*30+50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 609) {
-										if (.@id == 607) {	// Quick Lance
+										} else if (.@id == 607) {	// Quick Lance
 											if ((.@w == W_1HSPEAR || .@w == W_2HSPEAR)) bonus3 bAutoSpell,"KN_SPEARBOOMERANG",3,max(1,(.@m*30+50)/100);
 											bonus3 bAutoSpell,"CR_HOLYCROSS",3,max(1,(.@m*20+50)/100);
 											bonus3 bAutoSpell,"SM_MAGNUM",5,max(1,(.@m*20+50)/100);
-										} else if (.@id == 608) {	// Holy Light Reflex
+										}
+									}
+								}
+							}
+						}
+					} else {
+						if (.@id <= 630) {
+							if (.@id <= 618) {
+								if (.@id <= 612) {
+									if (.@id <= 609) {
+										if (.@id == 608) {	// Holy Light Reflex
 											bonus3 bAutoSpell,"AL_HOLYLIGHT",1,max(1,(.@m*40+50)/100);
 										} else if (.@id == 609) {	// Finger Offensive Reflex
 											bonus3 bAutoSpell,"MO_FINGEROFFENSIVE",1,max(1,(.@m*30+50)/100);
@@ -4103,174 +4119,162 @@ function	script	F_PT_Bonus	{
 											bonus3 bAutoSpell,"PR_TURNUNDEAD",1,max(1,(.@m*30+50)/100);
 										}
 									}
-								}
-							} else {
-								if (.@id <= 617) {
-									if (.@id <= 614) {
+								} else {
+									if (.@id <= 615) {
 										if (.@id == 613) {	// Zealous Hands
 											bonus3 bAutoSpell,"MO_FINGEROFFENSIVE",3,max(1,(.@m*30+50)/100);
 											bonus3 bAutoSpell,"AL_HOLYLIGHT",5,max(1,(.@m*20+50)/100);
 										} else if (.@id == 614) {	// Fire Bolt Reflex
 											bonus3 bAutoSpell,"MG_FIREBOLT",1,max(1,(.@m*40+50)/100);
+										} else if (.@id == 615) {	// Cold Bolt Reflex
+											bonus3 bAutoSpell,"MG_COLDBOLT",1,max(1,(.@m*40+50)/100);
 										}
 									} else {
-										if (.@id == 615) {	// Cold Bolt Reflex
-											bonus3 bAutoSpell,"MG_COLDBOLT",1,max(1,(.@m*40+50)/100);
-										} else if (.@id == 616) {	// Spark Reflexes
+										if (.@id == 616) {	// Spark Reflexes
 											bonus3 bAutoSpell,"MG_LIGHTNINGBOLT",3,max(1,(.@m*30+50)/100);
 											bonus3 bAutoSpell,"MG_FIREBOLT",3,max(1,(.@m*30+50)/100);
 											bonus3 bAutoSpell,"MG_COLDBOLT",3,max(1,(.@m*30+50)/100);
 										} else if (.@id == 617) {	// Napalm Beat Reflex
 											bonus3 bAutoSpell,"MG_NAPALMBEAT",1,max(1,(.@m*40+50)/100);
+										} else if (.@id == 618) {	// Soul Strike Reflex
+											bonus3 bAutoSpell,"MG_SOULSTRIKE",1,max(1,(.@m*30+50)/100);
 										}
 									}
-								} else {
-									if (.@id <= 620) {
-										if (.@id == 618) {	// Soul Strike Reflex
-											bonus3 bAutoSpell,"MG_SOULSTRIKE",1,max(1,(.@m*30+50)/100);
-										} else if (.@id == 619) {	// Quickened Spells
+								}
+							} else {
+								if (.@id <= 624) {
+									if (.@id <= 621) {
+										if (.@id == 619) {	// Quickened Spells
 											bonus3 bAutoSpell,"MG_FIREBALL",3,max(1,(.@m*30+50)/100);
 											bonus3 bAutoSpell,"MG_FROSTDIVER",3,max(1,(.@m*30+50)/100);
 											bonus3 bAutoSpell,"MG_THUNDERSTORM",2,max(1,(.@m*20+50)/100);
 										} else if (.@id == 620) {	// Double Strafe Reflex
 											if ((.@w == W_BOW)) bonus3 bAutoSpell,"AC_DOUBLE",1,max(1,(.@m*40+50)/100);
+										} else if (.@id == 621) {	// Arrow Repel Reflex
+											if ((.@w == W_BOW)) bonus3 bAutoSpell,"AC_CHARGEARROW",1,max(1,(.@m*30+50)/100);
 										}
 									} else {
-										if (.@id == 621) {	// Arrow Repel Reflex
-											if ((.@w == W_BOW)) bonus3 bAutoSpell,"AC_CHARGEARROW",1,max(1,(.@m*30+50)/100);
-										} else if (.@id == 622) {	// Hair Trigger
+										if (.@id == 622) {	// Hair Trigger
 											if ((.@w == W_BOW)) bonus3 bAutoSpell,"AC_DOUBLE",3,max(1,(.@m*30+50)/100);
 											if (checkfalcon()) bonus3 bAutoSpell,"HT_BLITZBEAT",1,max(1,(.@m*30+50)/100);
 											if ((.@w == W_BOW)) bonus3 bAutoSpell,"AC_SHOWER",2,max(1,(.@m*20+50)/100);
 										} else if (.@id == 623) {	// Sharpshooting Reflex
 											if ((.@w == W_BOW)) bonus3 bAutoSpell,"SN_SHARPSHOOTING",1,max(1,(.@m*20+50)/100);
+										} else if (.@id == 624) {	// Blitz Beat Reflex
+											if (checkfalcon()) bonus3 bAutoSpell,"HT_BLITZBEAT",2,max(1,(.@m*30+50)/100);
+										}
+									}
+								} else {
+									if (.@id <= 627) {
+										if (.@id == 625) {	// Rapid Volley
+											if ((.@w == W_BOW)) bonus3 bAutoSpell,"AC_DOUBLE",4,max(1,(.@m*30+50)/100);
+											if ((.@w == W_BOW)) bonus3 bAutoSpell,"AC_CHARGEARROW",2,max(1,(.@m*30+50)/100);
+											if ((.@w == W_BOW)) bonus3 bAutoSpell,"SN_SHARPSHOOTING",2,max(1,(.@m*20+50)/100);
+										} else if (.@id == 626) {	// Envenom Reflex
+											bonus3 bAutoSpell,"TF_POISON",1,max(1,(.@m*40+50)/100);
+										} else if (.@id == 627) {	// Sonic Blow Reflex
+											if ((.@w == W_KATAR || .@w == W_DAGGER)) bonus3 bAutoSpell,"AS_SONICBLOW",1,max(1,(.@m*30+50)/100);
+										}
+									} else {
+										if (.@id == 628) {	// Cutpurse Reflexes
+											if ((.@w == W_KATAR || .@w == W_DAGGER)) bonus3 bAutoSpell,"AS_GRIMTOOTH",2,max(1,(.@m*30+50)/100);
+											bonus3 bAutoSpell,"TF_SPRINKLESAND",1,max(1,(.@m*30+50)/100);
+											bonus3 bAutoSpell,"TF_POISON",3,max(1,(.@m*30+50)/100);
+										} else if (.@id == 629) {	// Back Stab Reflex
+											bonus3 bAutoSpell,"RG_BACKSTAP",1,max(1,(.@m*30+50)/100);
+										} else if (.@id == 630) {	// Stone Fling Reflex
+											bonus3 bAutoSpell,"TF_THROWSTONE",1,max(1,(.@m*40+50)/100);
 										}
 									}
 								}
 							}
 						} else {
-							if (.@id <= 634) {
-								if (.@id <= 628) {
-									if (.@id <= 625) {
-										if (.@id == 624) {	// Blitz Beat Reflex
-											if (checkfalcon()) bonus3 bAutoSpell,"HT_BLITZBEAT",2,max(1,(.@m*30+50)/100);
-										} else if (.@id == 625) {	// Rapid Volley
-											if ((.@w == W_BOW)) bonus3 bAutoSpell,"AC_DOUBLE",4,max(1,(.@m*30+50)/100);
-											if ((.@w == W_BOW)) bonus3 bAutoSpell,"AC_CHARGEARROW",2,max(1,(.@m*30+50)/100);
-											if ((.@w == W_BOW)) bonus3 bAutoSpell,"SN_SHARPSHOOTING",2,max(1,(.@m*20+50)/100);
-										}
-									} else {
-										if (.@id == 626) {	// Envenom Reflex
-											bonus3 bAutoSpell,"TF_POISON",1,max(1,(.@m*40+50)/100);
-										} else if (.@id == 627) {	// Sonic Blow Reflex
-											if ((.@w == W_KATAR || .@w == W_DAGGER)) bonus3 bAutoSpell,"AS_SONICBLOW",1,max(1,(.@m*30+50)/100);
-										} else if (.@id == 628) {	// Cutpurse Reflexes
-											if ((.@w == W_KATAR || .@w == W_DAGGER)) bonus3 bAutoSpell,"AS_GRIMTOOTH",2,max(1,(.@m*30+50)/100);
-											bonus3 bAutoSpell,"TF_SPRINKLESAND",1,max(1,(.@m*30+50)/100);
-											bonus3 bAutoSpell,"TF_POISON",3,max(1,(.@m*30+50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 631) {
-										if (.@id == 629) {	// Back Stab Reflex
-											bonus3 bAutoSpell,"RG_BACKSTAP",1,max(1,(.@m*30+50)/100);
-										} else if (.@id == 630) {	// Stone Fling Reflex
-											bonus3 bAutoSpell,"TF_THROWSTONE",1,max(1,(.@m*40+50)/100);
-										} else if (.@id == 631) {	// Flicker Strikes
+							if (.@id <= 641) {
+								if (.@id <= 635) {
+									if (.@id <= 632) {
+										if (.@id == 631) {	// Flicker Strikes
 											if ((.@w == W_KATAR || .@w == W_DAGGER)) bonus3 bAutoSpell,"AS_SONICBLOW",3,max(1,(.@m*20+50)/100);
 											bonus3 bAutoSpell,"RG_RAID",1,max(1,(.@m*30+50)/100);
 											bonus3 bAutoSpell,"RG_INTIMIDATE",1,max(1,(.@m*30+50)/100);
+										} else if (.@id == 632) {	// Mammonite Reflex
+											bonus3 bAutoSpell,"MC_MAMMONITE",1,max(1,(.@m*40+50)/100);
 										}
 									} else {
-										if (.@id == 632) {	// Mammonite Reflex
-											bonus3 bAutoSpell,"MC_MAMMONITE",1,max(1,(.@m*40+50)/100);
-										} else if (.@id == 633) {	// Cart Revolution Reflex
+										if (.@id == 633) {	// Cart Revolution Reflex
 											if (checkcart()) bonus3 bAutoSpell,"MC_CARTREVOLUTION",1,max(1,(.@m*30+50)/100);
 										} else if (.@id == 634) {	// Pocket Knuckles
 											bonus3 bAutoSpell,"MC_MAMMONITE",3,max(1,(.@m*30+50)/100);
 											if ((.@w == W_DAGGER || .@w == W_1HSWORD || .@w == W_1HAXE || .@w == W_2HAXE || .@w == W_MACE)) bonus3 bAutoSpell,"BS_HAMMERFALL",1,max(1,(.@m*20+50)/100);
 											if (checkcart()) bonus3 bAutoSpell,"MC_CARTREVOLUTION",1,max(1,(.@m*40+50)/100);
+										} else if (.@id == 635) {	// Bomb Reflex
+											bonus3 bAutoSpell,"AM_DEMONSTRATION",1,max(1,(.@m*30+50)/100);
 										}
 									}
-								}
-							} else {
-								if (.@id <= 640) {
-									if (.@id <= 637) {
-										if (.@id == 635) {	// Bomb Reflex
-											bonus3 bAutoSpell,"AM_DEMONSTRATION",1,max(1,(.@m*30+50)/100);
-										} else if (.@id == 636) {	// Acid Terror Reflex
+								} else {
+									if (.@id <= 638) {
+										if (.@id == 636) {	// Acid Terror Reflex
 											bonus3 bAutoSpell,"AM_ACIDTERROR",1,max(1,(.@m*20+50)/100);
 										} else if (.@id == 637) {	// Back-Alley Chemistry
 											bonus3 bAutoSpell,"AM_SPHEREMINE",1,max(1,(.@m*30+50)/100);
 											bonus3 bAutoSpell,"MC_MAMMONITE",5,max(1,(.@m*20+50)/100);
 											if ((.@w == W_FIST || .@w == W_DAGGER || .@w == W_1HSWORD || .@w == W_2HSWORD || .@w == W_1HSPEAR || .@w == W_2HSPEAR || .@w == W_1HAXE || .@w == W_2HAXE || .@w == W_MACE || .@w == W_2HMACE || .@w == W_STAFF || .@w == W_KNUCKLE || .@w == W_MUSICAL || .@w == W_WHIP || .@w == W_BOOK || .@w == W_KATAR || .@w == W_REVOLVER || .@w == W_RIFLE || .@w == W_GATLING || .@w == W_SHOTGUN || .@w == W_GRENADE || .@w == W_HUUMA)) bonus3 bAutoSpell,"WS_CARTTERMINATION",1,max(1,(.@m*20+50)/100);
+										} else if (.@id == 638) {	// Spiral Pierce
+											bonus2 bSkillAtk,"LK_SPIRALPIERCE",max(1,(.@m*6+50)/100);
 										}
 									} else {
-										if (.@id == 638) {	// Spiral Pierce
-											bonus2 bSkillAtk,"LK_SPIRALPIERCE",max(1,(.@m*6+50)/100);
-										} else if (.@id == 639) {	// Head Crush
+										if (.@id == 639) {	// Head Crush
 											bonus2 bSkillAtk,"LK_HEADCRUSH",max(1,(.@m*6+50)/100);
 										} else if (.@id == 640) {	// Berserker's Edge
 											bonus2 bSkillAtk,"LK_JOINTBEAT",max(1,(.@m*8+50)/100);
 											bonus bMaxHPrate,max(1,(.@m*6+50)/100);
 											bonus bAspdRate,max(1,(.@m*3+50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 643) {
-										if (.@id == 641) {	// Lord of the Blade
+										} else if (.@id == 641) {	// Lord of the Blade
 											bonus2 bSkillAtk,"LK_SPIRALPIERCE",max(1,(.@m*12+50)/100);
 											bonus2 bAddRace,RC_All,max(1,(.@m*6+50)/100);
 											bonus bHPrecovRate,max(1,(.@m*10+50)/100);
-										} else if (.@id == 642) {	// Gloria Domini
+										}
+									}
+								}
+							} else {
+								if (.@id <= 647) {
+									if (.@id <= 644) {
+										if (.@id == 642) {	// Gloria Domini
 											bonus2 bSkillAtk,"PA_PRESSURE",max(1,(.@m*6+50)/100);
 										} else if (.@id == 643) {	// Rapid Smiting
 											bonus2 bSkillAtk,"PA_SHIELDCHAIN",max(1,(.@m*6+50)/100);
-										}
-									} else {
-										if (.@id == 644) {	// Divine Bulwark
+										} else if (.@id == 644) {	// Divine Bulwark
 											bonus2 bSubRace,RC_All,max(1,(.@m*4+50)/100);
 											bonus bShortWeaponDamageReturn,max(1,(.@m*8+50)/100);
 											bonus2 bSubEle,Ele_Holy,max(1,(.@m*10+50)/100);
-										} else if (.@id == 645) {	// Holy Knight
+										}
+									} else {
+										if (.@id == 645) {	// Holy Knight
 											bonus2 bSkillAtk,"PA_PRESSURE",max(1,(.@m*12+50)/100);
 											bonus bMaxHPrate,max(1,(.@m*8+50)/100);
 											bonus bMagicAtkDef,max(1,(.@m*6+50)/100);
 										} else if (.@id == 646) {	// Sanctuary
 											bonus2 bSkillHeal,"PR_SANCTUARY",max(1,(.@m*8+50)/100);
+										} else if (.@id == 647) {	// Turn Undead
+											bonus2 bSkillAtk,"PR_TURNUNDEAD",max(1,(.@m*8+50)/100);
 										}
 									}
-								}
-							}
-						}
-					}
-				} else {
-					if (.@id <= 691) {
-						if (.@id <= 668) {
-							if (.@id <= 657) {
-								if (.@id <= 651) {
-									if (.@id <= 648) {
-										if (.@id == 647) {	// Turn Undead
-											bonus2 bSkillAtk,"PR_TURNUNDEAD",max(1,(.@m*8+50)/100);
-										} else if (.@id == 648) {	// Assumptio
+								} else {
+									if (.@id <= 650) {
+										if (.@id == 648) {	// Assumptio
 											bonus2 bSubRace,RC_All,max(1,(.@m*5+50)/100);
 											bonus bMaxSPrate,max(1,(.@m*5+50)/100);
 											bonus2 bRegenPercentHP,max(1,(.@m*1+50)/100),8000;
-										}
-									} else {
-										if (.@id == 649) {	// Archbishop's Grace
+										} else if (.@id == 649) {	// Archbishop's Grace
 											bonus2 bSkillHeal,"AL_HEAL",max(1,(.@m*18+50)/100);
 											bonus2 bSkillUseSPrate,"AL_HEAL",max(1,(.@m*15+50)/100);
 											bonus bHealPower2,max(1,(.@m*10+50)/100);
 										} else if (.@id == 650) {	// Palm Strike
 											bonus2 bSkillAtk,"CH_PALMSTRIKE",max(1,(.@m*6+50)/100);
-										} else if (.@id == 651) {	// Tiger Knuckle Fist
-											bonus2 bSkillAtk,"CH_TIGERFIST",max(1,(.@m*6+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 654) {
-										if (.@id == 652) {	// Iron Fist
+									} else {
+										if (.@id == 651) {	// Tiger Knuckle Fist
+											bonus2 bSkillAtk,"CH_TIGERFIST",max(1,(.@m*6+50)/100);
+										} else if (.@id == 652) {	// Iron Fist
 											bonus2 bSkillAtk,"CH_CHAINCRUSH",max(1,(.@m*8+50)/100);
 											bonus bAspdRate,max(1,(.@m*4+50)/100);
 											bonus bHPrecovRate,max(1,(.@m*10+50)/100);
@@ -4278,13 +4282,25 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"CH_PALMSTRIKE",max(1,(.@m*12+50)/100);
 											bonus2 bSkillAtk,"MO_EXTREMITYFIST",max(1,(.@m*10+50)/100);
 											bonus bMaxHPrate,max(1,(.@m*8+50)/100);
-										} else if (.@id == 654) {	// Napalm Vulcan
+										}
+									}
+								}
+							}
+						}
+					}
+				} else {
+					if (.@id <= 708) {
+						if (.@id <= 675) {
+							if (.@id <= 664) {
+								if (.@id <= 658) {
+									if (.@id <= 655) {
+										if (.@id == 654) {	// Napalm Vulcan
 											bonus2 bSkillAtk,"HW_NAPALMVULCAN",max(1,(.@m*6+50)/100);
+										} else if (.@id == 655) {	// Magic Crasher
+											bonus2 bSkillAtk,"HW_MAGICCRASHER",max(1,(.@m*6+50)/100);
 										}
 									} else {
-										if (.@id == 655) {	// Magic Crasher
-											bonus2 bSkillAtk,"HW_MAGICCRASHER",max(1,(.@m*6+50)/100);
-										} else if (.@id == 656) {	// Arcane Overflow
+										if (.@id == 656) {	// Arcane Overflow
 											bonus bMatkRate,max(1,(.@m*8+50)/100);
 											bonus bMaxSPrate,max(1,(.@m*6+50)/100);
 											bonus2 bIgnoreMdefRaceRate,RC_All,max(1,(.@m*8+50)/100);
@@ -4292,19 +4308,15 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"HW_NAPALMVULCAN",max(1,(.@m*12+50)/100);
 											bonus2 bMagicAddRace,RC_All,max(1,(.@m*8+50)/100);
 											bonus bCastrate,min(-1,(.@m*(-6)-50)/100);
+										} else if (.@id == 658) {	// Fire Magic
+											bonus2 bMagicAtkEle,Ele_Fire,max(1,(.@m*8+50)/100);
 										}
 									}
-								}
-							} else {
-								if (.@id <= 662) {
-									if (.@id <= 659) {
-										if (.@id == 658) {	// Fire Magic
-											bonus2 bMagicAtkEle,Ele_Fire,max(1,(.@m*8+50)/100);
-										} else if (.@id == 659) {	// Water Magic
+								} else {
+									if (.@id <= 661) {
+										if (.@id == 659) {	// Water Magic
 											bonus2 bMagicAtkEle,Ele_Water,max(1,(.@m*8+50)/100);
-										}
-									} else {
-										if (.@id == 660) {	// Erudite
+										} else if (.@id == 660) {	// Erudite
 											bonus bMaxSPrate,max(1,(.@m*8+50)/100);
 											bonus bSPrecovRate,max(1,(.@m*12+50)/100);
 											bonus bUseSPrate,min(-1,(.@m*(-6)-50)/100);
@@ -4312,101 +4324,103 @@ function	script	F_PT_Bonus	{
 											bonus bMatkRate,max(1,(.@m*10+50)/100);
 											bonus bCastrate,min(-1,(.@m*(-8)-50)/100);
 											bonus3 bAutoSpell,"WZ_JUPITEL",3,max(1,(.@m*30+50)/100);
-										} else if (.@id == 662) {	// Falcon Assault
-											bonus2 bSkillAtk,"SN_FALCONASSAULT",max(1,(.@m*6+50)/100);
 										}
-									}
-								} else {
-									if (.@id <= 665) {
-										if (.@id == 663) {	// Sharpshooting
+									} else {
+										if (.@id == 662) {	// Falcon Assault
+											bonus2 bSkillAtk,"SN_FALCONASSAULT",max(1,(.@m*6+50)/100);
+										} else if (.@id == 663) {	// Sharpshooting
 											bonus2 bSkillAtk,"SN_SHARPSHOOTING",max(1,(.@m*6+50)/100);
 										} else if (.@id == 664) {	// Falcon Eyes
 											bonus bLongAtkRate,max(1,(.@m*8+50)/100);
 											bonus bCritical,max(1,(.@m*6+50)/100);
 											bonus bHit,max(1,(.@m*12+50)/100);
-										} else if (.@id == 665) {	// Wind Walker
+										}
+									}
+								}
+							} else {
+								if (.@id <= 669) {
+									if (.@id <= 666) {
+										if (.@id == 665) {	// Wind Walker
 											bonus2 bSkillAtk,"SN_FALCONASSAULT",max(1,(.@m*12+50)/100);
 											bonus bCritAtkRate,max(1,(.@m*12+50)/100);
 											bonus bSpeedAddRate,max(1,(.@m*4+50)/100);
+										} else if (.@id == 666) {	// Arrow Vulcan
+											bonus2 bSkillAtk,"CG_ARROWVULCAN",max(1,(.@m*6+50)/100);
 										}
 									} else {
-										if (.@id == 666) {	// Arrow Vulcan
-											bonus2 bSkillAtk,"CG_ARROWVULCAN",max(1,(.@m*6+50)/100);
-										} else if (.@id == 667) {	// Slinging Arrow
+										if (.@id == 667) {	// Slinging Arrow
 											bonus2 bSkillAtk,"DC_THROWARROW",max(1,(.@m*6+50)/100);
 										} else if (.@id == 668) {	// Showstopper
 											bonus bMaxSPrate,max(1,(.@m*8+50)/100);
 											bonus bAspdRate,max(1,(.@m*4+50)/100);
 											bonus bFlee,max(1,(.@m*10+50)/100);
-										}
-									}
-								}
-							}
-						} else {
-							if (.@id <= 679) {
-								if (.@id <= 673) {
-									if (.@id <= 670) {
-										if (.@id == 669) {	// Headliner
+										} else if (.@id == 669) {	// Headliner
 											bonus2 bSkillAtk,"CG_ARROWVULCAN",max(1,(.@m*12+50)/100);
 											bonus bLongAtkRate,max(1,(.@m*10+50)/100);
 											bonus bCritical,max(1,(.@m*6+50)/100);
-										} else if (.@id == 670) {	// Soul Destroyer
-											bonus2 bSkillAtk,"ASC_BREAKER",max(1,(.@m*6+50)/100);
 										}
-									} else {
-										if (.@id == 671) {	// Meteor Assault
+									}
+								} else {
+									if (.@id <= 672) {
+										if (.@id == 670) {	// Soul Destroyer
+											bonus2 bSkillAtk,"ASC_BREAKER",max(1,(.@m*6+50)/100);
+										} else if (.@id == 671) {	// Meteor Assault
 											bonus2 bSkillAtk,"ASC_METEORASSAULT",max(1,(.@m*6+50)/100);
 										} else if (.@id == 672) {	// Poison Mastery
 											bonus2 bAddEff,Eff_Poison,max(1,(.@m*1000+50)/100);
 											bonus bCritAtkRate,max(1,(.@m*12+50)/100);
 											bonus bCritical,max(1,(.@m*8+50)/100);
-										} else if (.@id == 673) {	// Cross Impact
+										}
+									} else {
+										if (.@id == 673) {	// Cross Impact
 											bonus2 bSkillAtk,"AS_SONICBLOW",max(1,(.@m*12+50)/100);
 											bonus4 bAutoSpellOnSkill,"AS_SONICBLOW","AS_SONICBLOW",5,max(1,(.@m*30+50)/100);
 											bonus bAspdRate,max(1,(.@m*4+50)/100);
-										}
-									}
-								} else {
-									if (.@id <= 676) {
-										if (.@id == 674) {	// Raid
+										} else if (.@id == 674) {	// Raid
 											bonus2 bSkillAtk,"RG_RAID",max(1,(.@m*6+50)/100);
 										} else if (.@id == 675) {	// Back Stab
 											bonus2 bSkillAtk,"RG_BACKSTAP",max(1,(.@m*6+50)/100);
-										} else if (.@id == 676) {	// Shadow Stalking
-											bonus bFlee,max(1,(.@m*12+50)/100);
-											bonus bLongAtkDef,max(1,(.@m*8+50)/100);
-											bonus bSpeedAddRate,max(1,(.@m*6+50)/100);
-										}
-									} else {
-										if (.@id == 677) {	// Phantom Thief
-											bonus2 bSkillAtk,"RG_RAID",max(1,(.@m*12+50)/100);
-											bonus bFlee2,max(1,(.@m*50+50)/100);
-											bonus bAddStealRate,max(1,(.@m*1200+50)/100);
-										} else if (.@id == 678) {	// Cart Termination
-											bonus2 bSkillAtk,"WS_CARTTERMINATION",max(1,(.@m*6+50)/100);
-										} else if (.@id == 679) {	// Hammer Fall
-											bonus2 bSkillAtk,"BS_HAMMERFALL",max(1,(.@m*6+50)/100);
 										}
 									}
 								}
-							} else {
-								if (.@id <= 685) {
-									if (.@id <= 682) {
-										if (.@id == 680) {	// Overforge
+							}
+						} else {
+							if (.@id <= 686) {
+								if (.@id <= 680) {
+									if (.@id <= 677) {
+										if (.@id == 676) {	// Shadow Stalking
+											bonus bFlee,max(1,(.@m*12+50)/100);
+											bonus bLongAtkDef,max(1,(.@m*8+50)/100);
+											bonus bSpeedAddRate,max(1,(.@m*6+50)/100);
+										} else if (.@id == 677) {	// Phantom Thief
+											bonus2 bSkillAtk,"RG_RAID",max(1,(.@m*12+50)/100);
+											bonus bFlee2,max(1,(.@m*50+50)/100);
+											bonus bAddStealRate,max(1,(.@m*1200+50)/100);
+										}
+									} else {
+										if (.@id == 678) {	// Cart Termination
+											bonus2 bSkillAtk,"WS_CARTTERMINATION",max(1,(.@m*6+50)/100);
+										} else if (.@id == 679) {	// Hammer Fall
+											bonus2 bSkillAtk,"BS_HAMMERFALL",max(1,(.@m*6+50)/100);
+										} else if (.@id == 680) {	// Overforge
 											.@l = getskilllv(113); if (.@l > 0 && .@l < 13) addtoskill 113,min(13-.@l,max(1,(.@m*1+50)/100));
 											bonus bAtk,max(1,(.@m*12+50)/100);
 											bonus bUnbreakable,max(1,(.@m*30+50)/100);
-										} else if (.@id == 681) {	// Master Whitesmith
+										}
+									}
+								} else {
+									if (.@id <= 683) {
+										if (.@id == 681) {	// Master Whitesmith
 											bonus2 bSkillAtk,"MC_CARTREVOLUTION",max(1,(.@m*12+50)/100);
 											bonus2 bAddRace,RC_All,max(1,(.@m*8+50)/100);
 											bonus bAddMaxWeight,max(1,(.@m*5000+50)/100);
 										} else if (.@id == 682) {	// Acid Demonstration
 											bonus2 bSkillAtk,"CR_ACIDDEMONSTRATION",max(1,(.@m*6+50)/100);
+										} else if (.@id == 683) {	// Slim Potion Pitcher
+											bonus2 bSkillHeal,"CR_SLIMPITCHER",max(1,(.@m*8+50)/100);
 										}
 									} else {
-										if (.@id == 683) {	// Slim Potion Pitcher
-											bonus2 bSkillHeal,"CR_SLIMPITCHER",max(1,(.@m*8+50)/100);
-										} else if (.@id == 684) {	// Lab Rat
+										if (.@id == 684) {	// Lab Rat
 											bonus bAddItemHealRate,max(1,(.@m*15+50)/100);
 											bonus bAddItemSPHealRate,max(1,(.@m*12+50)/100);
 											bonus bHPrecovRate,max(1,(.@m*8+50)/100);
@@ -4414,26 +4428,52 @@ function	script	F_PT_Bonus	{
 											bonus2 bSkillAtk,"AM_ACIDTERROR",max(1,(.@m*12+50)/100);
 											bonus2 bSkillAtk,"AM_DEMONSTRATION",max(1,(.@m*12+50)/100);
 											bonus bMaxHP,max(1,(.@m*300+50)/100);
+										} else if (.@id == 686) {	// Gemless Rift
+											bonus bInt,max(1,(.@m*1+50)/100);
 										}
 									}
-								} else {
-									if (.@id <= 688) {
-										if (.@id == 686) {	// Gemless Rift
-											bonus bInt,max(1,(.@m*1+50)/100);
-										} else if (.@id == 687) {	// Glass Rift
+								}
+							} else {
+								if (.@id <= 692) {
+									if (.@id <= 689) {
+										if (.@id == 687) {	// Glass Rift
 											bonus bStr,max(1,(.@m*1+50)/100);
 										} else if (.@id == 688) {	// Bulwark Rift
 											bonus bVit,max(1,(.@m*1+50)/100);
+										} else if (.@id == 689) {	// Gambler's Rift
+											bonus bDex,max(1,(.@m*1+50)/100);
 										}
 									} else {
-										if (.@id == 689) {	// Gambler's Rift
-											bonus bDex,max(1,(.@m*1+50)/100);
-										} else if (.@id == 690) {	// Undead Wager
+										if (.@id == 690) {	// Undead Wager
 											bonus2 bAddRace,RC_Undead,max(1,(.@m*5+50)/100);
 											bonus2 bSubRace,RC_Undead,min(-1,(.@m*(-5)-50)/100);
 										} else if (.@id == 691) {	// Demon Wager
 											bonus2 bAddRace,RC_Demon,max(1,(.@m*5+50)/100);
 											bonus2 bSubRace,RC_Demon,min(-1,(.@m*(-5)-50)/100);
+										} else if (.@id == 692) {	// Formless Wager
+											bonus2 bAddRace,RC_Formless,max(1,(.@m*5+50)/100);
+											bonus2 bSubRace,RC_Formless,min(-1,(.@m*(-5)-50)/100);
+										}
+									}
+								} else {
+									if (.@id <= 695) {
+										if (.@id == 693) {	// Insect Wager
+											bonus2 bAddRace,RC_Insect,max(1,(.@m*5+50)/100);
+											bonus2 bSubRace,RC_Insect,min(-1,(.@m*(-5)-50)/100);
+										} else if (.@id == 694) {	// Plant Wager
+											bonus2 bAddRace,RC_Plant,max(1,(.@m*5+50)/100);
+											bonus2 bSubRace,RC_Plant,min(-1,(.@m*(-5)-50)/100);
+										} else if (.@id == 695) {	// Brute Wager
+											bonus2 bAddRace,RC_Brute,max(1,(.@m*5+50)/100);
+											bonus2 bSubRace,RC_Brute,min(-1,(.@m*(-5)-50)/100);
+										}
+									} else {
+										if (.@id == 706) {	// Max HP
+											bonus bMaxHPrate,max(1,(.@m*2+50)/100);
+										} else if (.@id == 707) {	// Max SP
+											bonus bMaxSPrate,max(1,(.@m*2+50)/100);
+										} else if (.@id == 708) {	// Max HP
+											bonus bMaxHPrate,max(1,(.@m*2+50)/100);
 										}
 									}
 								}
@@ -4441,54 +4481,52 @@ function	script	F_PT_Bonus	{
 						}
 					} else {
 						if (.@id <= 4011) {
-							if (.@id <= 3781) {
-								if (.@id <= 3611) {
-									if (.@id <= 693) {
-										if (.@id == 692) {	// Formless Wager
-											bonus2 bAddRace,RC_Formless,max(1,(.@m*5+50)/100);
-											bonus2 bSubRace,RC_Formless,min(-1,(.@m*(-5)-50)/100);
-										} else if (.@id == 693) {	// Insect Wager
-											bonus2 bAddRace,RC_Insect,max(1,(.@m*5+50)/100);
-											bonus2 bSubRace,RC_Insect,min(-1,(.@m*(-5)-50)/100);
+							if (.@id <= 3673) {
+								if (.@id <= 713) {
+									if (.@id <= 710) {
+										if (.@id == 709) {	// Max SP
+											bonus bMaxSPrate,max(1,(.@m*2+50)/100);
+										} else if (.@id == 710) {	// Max HP
+											bonus bMaxHPrate,max(1,(.@m*2+50)/100);
 										}
 									} else {
-										if (.@id == 694) {	// Plant Wager
-											bonus2 bAddRace,RC_Plant,max(1,(.@m*5+50)/100);
-											bonus2 bSubRace,RC_Plant,min(-1,(.@m*(-5)-50)/100);
-										} else if (.@id == 695) {	// Brute Wager
-											bonus2 bAddRace,RC_Brute,max(1,(.@m*5+50)/100);
-											bonus2 bSubRace,RC_Brute,min(-1,(.@m*(-5)-50)/100);
-										} else if (.@id == 3611) {	// Weapon Doctrine: Swords
-											bonus2 bWeaponDamageRate,W_1HSWORD,max(1,(.@m*10+50)/100);
-											bonus2 bWeaponDamageRate,W_2HSWORD,max(1,(.@m*10+50)/100);
+										if (.@id == 711) {	// Max SP
+											bonus bMaxSPrate,max(1,(.@m*2+50)/100);
+										} else if (.@id == 712) {	// Max HP
+											bonus bMaxHPrate,max(1,(.@m*2+50)/100);
+										} else if (.@id == 713) {	// Max SP
+											bonus bMaxSPrate,max(1,(.@m*2+50)/100);
 										}
 									}
 								} else {
-									if (.@id <= 3671) {
-										if (.@id == 3612) {	// Weapon Doctrine: Spears
+									if (.@id <= 3613) {
+										if (.@id == 3611) {	// Weapon Doctrine: Swords
+											bonus2 bWeaponDamageRate,W_1HSWORD,max(1,(.@m*10+50)/100);
+											bonus2 bWeaponDamageRate,W_2HSWORD,max(1,(.@m*10+50)/100);
+										} else if (.@id == 3612) {	// Weapon Doctrine: Spears
 											bonus2 bWeaponDamageRate,W_1HSPEAR,max(1,(.@m*12+50)/100);
 											bonus2 bWeaponDamageRate,W_2HSPEAR,max(1,(.@m*12+50)/100);
 										} else if (.@id == 3613) {	// Weapon Doctrine: Axes and Maces
 											bonus2 bWeaponDamageRate,W_1HAXE,max(1,(.@m*10+50)/100);
 											bonus2 bWeaponDamageRate,W_2HAXE,max(1,(.@m*10+50)/100);
 											bonus2 bWeaponDamageRate,W_MACE,max(1,(.@m*10+50)/100);
-										} else if (.@id == 3671) {	// Battle Doctrine: Offence
-											bonus2 bAddRace,RC_All,max(1,(.@m*5+50)/100);
 										}
 									} else {
-										if (.@id == 3672) {	// Battle Doctrine: Vitality
+										if (.@id == 3671) {	// Battle Doctrine: Offence
+											bonus2 bAddRace,RC_All,max(1,(.@m*5+50)/100);
+										} else if (.@id == 3672) {	// Battle Doctrine: Vitality
 											bonus bMaxHPrate,max(1,(.@m*8+50)/100);
 										} else if (.@id == 3673) {	// Battle Doctrine: Guard
 											bonus2 bSubRace,RC_All,max(1,(.@m*5+50)/100);
-										} else if (.@id == 3781) {	// Divine Doctrine: Healing
-											bonus bHealPower,max(1,(.@m*12+50)/100);
 										}
 									}
 								}
 							} else {
 								if (.@id <= 3843) {
 									if (.@id <= 3783) {
-										if (.@id == 3782) {	// Divine Doctrine: Mending
+										if (.@id == 3781) {	// Divine Doctrine: Healing
+											bonus bHealPower,max(1,(.@m*12+50)/100);
+										} else if (.@id == 3782) {	// Divine Doctrine: Mending
 											bonus bHealPower2,max(1,(.@m*10+50)/100);
 											bonus bHPrecovRate,max(1,(.@m*8+50)/100);
 										} else if (.@id == 3783) {	// Divine Doctrine: Smiting

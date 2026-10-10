@@ -10,8 +10,10 @@
 //=     F_PT_Bonus on every stat recalculation. F_PT_Bonus reads PT_nodes[]
 //=     and runs the bonus line of each node, so nothing has to be cleared
 //=     (bonus_script_clear can only wipe every script of the player).
-//=   - Skill points (setting skill_points, 5 by default): the character collects them once (PT_spc, 0 = not yet
-//=     collected) and spends them on the ETC tab of the window to learn any skill of any class, one point per level.
+//=   - Skill points: ten nodes on the outer ring of the tree (.skp) give one skill point each (setting skill_points caps
+//=     the total, 10 by default). PT_spc keeps the highest number of them the character ever held, so refunding a node
+//=     never takes a point away. They are spent on the Skills tab of the window to learn any skill of any class, one
+//=     point per level.
 //=     What was learned is kept in PT_ls[] (skill id), PT_ll[] (level) and PT_sps (points spent); L_Skills gives it
 //=     with skill <id>,<lv>,3 (permanent, survives job changes). The list of skills a server knows is
 //=     passive_tree_skills.txt ($@PT_skok[id] = max level). PT_gs[] only remains to take back the skills that older
@@ -19,7 +21,7 @@
 //=   - The client window (client/index.js) talks to this script through
 //=       @passive <n> state | cards | alloc <id,id,...> | refund <id> | reset
 //=               | socket <node> <card id> | unsocket <node> | choose <node> <option>
-//=               | sclaim | slearn <skill id> <level>
+//=               | slearn <skill id> <level>
 //=     and gets one line back:
 //=       status|message|start|points|mult|refund|ids|sockets|inventory cards|cards on|socket price|choices|job line|keystone limit|reborn|drop cap|builds|current slot|swap price|skill points setting|collected|spent|renewal|learned
 //=     (refund is -1 when refunds are switched off; sockets is node:card,...;
@@ -43,7 +45,7 @@ OnInit:
 	.ppl = callfunc("F_ModSetting", "path-of-ragnarok", "points_per_level", 1);
 	.refund = callfunc("F_ModSetting", "path-of-ragnarok", "refund_zeny", 10000);
 	.canrefund = callfunc("F_ModSetting", "path-of-ragnarok", "allow_refund", 1);
-	.sp = callfunc("F_ModSetting", "path-of-ragnarok", "skill_points", 5);
+	.sp = min(max(callfunc("F_ModSetting", "path-of-ragnarok", "skill_points", 10), 0), 10);
 	$@PT_mult = callfunc("F_ModSetting", "path-of-ragnarok", "value_mult", 100);
 	.cards = callfunc("F_ModSetting", "path-of-ragnarok", "allow_cards", 1);
 	.mvpcards = callfunc("F_ModSetting", "path-of-ragnarok", "mvp_cards", 0);
@@ -166,14 +168,6 @@ OnQuery:
 		} else {
 			setd("PT_b" + .@slot + "_name$", .@bn$);
 		}
-	} else if (.@cmd$ == "sclaim") {
-		.@r$ = callsub(L_SkillClaim);
-		if (.@r$ != "") {
-			.@status$ = "err";
-			.@msg$ = .@r$;
-		} else
-			.@msg$ = "You collected " + PT_spc + " skill points.";
-		callsub L_Apply;
 	} else if (.@cmd$ == "slearn") {
 		.@r$ = callsub(L_SkillLearn, atoi(.@arg$), atoi(.@atcmd_parameters$[3]));
 		if (.@r$ != "") {
@@ -307,6 +301,14 @@ L_Skills:
 	for (.@i = 0; .@i < .@g; .@i++)
 		skill PT_gs[.@i], 0, 3;
 	deletearray PT_gs[0], .@g;
+	.@c = 0;
+	.@n = getarraysize(PT_nodes);
+	for (.@i = 0; .@i < .@n; .@i++) {
+		if (.skp[PT_nodes[.@i]])
+			.@c++;
+	}
+	if (.@c > PT_spc)
+		PT_spc = .@c;
 	.@n = getarraysize(PT_ls);
 	for (.@i = 0; .@i < .@n; .@i++) {
 		if (getskilllv(PT_ls[.@i]) < PT_ll[.@i])
@@ -314,23 +316,15 @@ L_Skills:
 	}
 	return;
 
-// Collects the skill points. Only once per character.
-L_SkillClaim:
-	if (.sp < 1)
-		return "Skill points are switched off.";
-	if (PT_spc)
-		return "You already collected your skill points.";
-	PT_spc = .sp;
-	return "";
-
 // Learns skill getarg(0) up to level getarg(1) for one point per level. Returns "" or the reason it was refused.
 L_SkillLearn:
 	.@id = getarg(0);
 	.@lv = getarg(1);
 	if (.sp < 1)
 		return "Skill points are switched off.";
-	if (!PT_spc)
-		return "Collect your skill points first.";
+	.@total = min(PT_spc, .sp);
+	if (.@total < 1)
+		return "Collect skill points on the outer ring of the tree first.";
 	.@max = $@PT_skok[.@id];
 	if (.@max < 1)
 		return "That skill cannot be learned here.";
@@ -340,7 +334,7 @@ L_SkillLearn:
 	if (.@have >= .@lv)
 		return "You already know that skill at level " + .@have + ".";
 	.@cost = .@lv - .@have;
-	.@left = PT_spc - PT_sps;
+	.@left = .@total - PT_sps;
 	if (.@left < .@cost)
 		return "That needs " + .@cost + " skill point" + (.@cost > 1 ? "s" : "") + " and you have " + .@left + ".";
 	.@at = -1;
@@ -796,7 +790,7 @@ L_Reply:
 	if (.@m < 10)
 		.@m = 100;
 	.@r = .canrefund ? .refund : -1;
-	.@out$ = getarg(1) + "|" + getarg(2) + "|" + PT_start + "|" + min(PT_earned, .max) + "|" + .@m + "|" + .@r + "|" + .@ids$ + "|" + .@sock$ + "|" + .@inv$ + "|" + .cards + "|" + .sockzeny + "|" + .@choice$ + "|" + callsub(L_Line) + "|" + .maxkeys + "|" + callsub(L_Upper) + "|" + $@PT_dropcap + "|" + .@bs$ + "|" + PT_slot + "|" + .swapzeny + "|" + .sp + "|" + PT_spc + "|" + PT_sps + "|" + $@PT_re + "|" + .@learned$;
+	.@out$ = getarg(1) + "|" + getarg(2) + "|" + PT_start + "|" + min(PT_earned, .max) + "|" + .@m + "|" + .@r + "|" + .@ids$ + "|" + .@sock$ + "|" + .@inv$ + "|" + .cards + "|" + .sockzeny + "|" + .@choice$ + "|" + callsub(L_Line) + "|" + .maxkeys + "|" + callsub(L_Upper) + "|" + $@PT_dropcap + "|" + .@bs$ + "|" + PT_slot + "|" + .swapzeny + "|" + .sp + "|" + min(PT_spc, .sp) + "|" + PT_sps + "|" + $@PT_re + "|" + .@learned$;
 	.@len = getstrlen(.@out$);
 	.@parts = (.@len + 149) / 150;
 	for (.@p = 0; .@p < .@parts; .@p++)

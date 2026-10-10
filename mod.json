@@ -2,7 +2,7 @@
   "name": "path-of-ragnarok",
   "version": "1.2.0",
   "author": "rhewid",
-  "description": "Path of Ragnarok (made mainly for pre-renewal): a Path-of-Exile style passive skill tree for every character: your first class picks the origin in the centre, each job level earns a point, and 695 connected nodes give stats, resistances, damage against races and elements, skill boosts (including weak or neglected skills), status effects, auto-casts and free skill recasts, drains, weapon masteries, EXP and drop bonuses, utility skills, 12 trade-off keystones, job-line and rebirth branches, teleport rifts and choose-one masteries. 6 sockets take cards. Saved builds. An ETC tab spends 5 once-only skill points on any skill of any class. Search it, open it with Alt+P or @passive.",
+  "description": "Path of Ragnarok (made mainly for pre-renewal): a Path-of-Exile style passive skill tree for every character: your first class picks the origin in the centre, each job level earns a point, and 713 connected nodes give stats, resistances, damage against races and elements, skill boosts (including weak or neglected skills), status effects, auto-casts and free skill recasts, drains, weapon masteries, EXP and drop bonuses, utility skills, 12 trade-off keystones, job-line and rebirth branches, teleport rifts and choose-one masteries. 6 sockets take cards. Saved builds. 10 skill points on the outer ring buy any skill of any class on the Skills tab. Search it, open it with Alt+P or @passive.",
   "requires": {
     "app": ">=1.4.5",
     "era": "any"
@@ -54,11 +54,11 @@
     {
       "key": "skill_points",
       "type": "number",
-      "default": 5,
+      "default": 10,
       "min": 0,
-      "max": 50,
-      "label": "Skill points on the ETC tab",
-      "description": "Every character can collect this many skill points once and spend them (one point per level) on any skill of any class from the ETC tab of the window. 0 = switched off: nobody can collect or spend points, skills already learned stay."
+      "max": 10,
+      "label": "Most skill points",
+      "description": "The outer ring of the tree holds 10 skill point nodes. Each collected node gives one point to spend (one point per level) on any skill of any class on the Skills tab. This caps the total a character can use. 0 = switched off: nobody can spend points, skills already learned stay."
     },
     {
       "key": "show_button",

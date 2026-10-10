@@ -940,6 +940,32 @@ for (let s = 0; s < 6; s++) {
 	extraLinks.push([byKey.get(`V${s}.${RING5.n - 1}`), node, true], [node, byKey.get(`V${(s + 1) % 6}.0`), true], [node, byKey.get(`KK${s}`), false]);
 }
 
+// ---- skill points: ten nodes on a ring outside everything else, linked to each other. Only four ways lead in, at north, east,
+// south and west: a short chain from the outermost node of the tree in that direction. Collecting a node gives one skill point
+// for the Skills tab of the window (the server keeps the best count ever reached, so a refund never takes a point away).
+const SKILL_RING = [-90, -60, -30, 0, 45, 90, 120, 150, 180, 225];
+const SKILL_GATES = new Set([-90, 0, 90, 180]);
+{
+	const inner = nodes.filter(n => n.type !== 'start');
+	const maxR = Math.max(...inner.map(n => Math.hypot(n.x, n.y)));
+	const R = Math.round(maxR + 170);
+	const angle = n => Math.atan2(n.y, n.x) * 180 / Math.PI;
+	const diff = (a, b) => Math.abs(((a - b + 540) % 360) - 180);
+	const ring = SKILL_RING.map((deg, i) => {
+		const [x, y] = pos(R, deg);
+		return add(`SP${i}`, 'skillpt', x, y, 'Skill Point', [], 'Collecting it gives 1 skill point (10 in total on this ring) to spend on the Skills tab. A point stays yours once collected, even if you refund the node.');
+	});
+	ring.forEach((n, i) => extraLinks.push([n, ring[(i + 1) % ring.length], true]));
+	SKILL_RING.forEach((deg, i) => {
+		if (!SKILL_GATES.has(deg)) return;
+		const near = inner.filter(n => diff(angle(n), deg) <= 8);
+		const from = near.sort((a, b) => Math.hypot(b.x, b.y) - Math.hypot(a.x, a.y))[0];
+		const to = ring[i];
+		const chain = [1, 2].map(k => add(`SPC${i}.${k}`, 'small', Math.round((from.x + (to.x - from.x) * k / 3) * 10) / 10, Math.round((from.y + (to.y - from.y) * k / 3) * 10) / 10, null, effects([k === 1 ? ['hpp', 2] : ['spp', 2]])));
+		extraLinks.push([from, chain[0], false], [chain[0], chain[1], false], [chain[1], to, false]);
+	});
+}
+
 nodes.forEach((n, i) => { n.id = i + 1; });
 for (const n of nodes) if (n.partner) n.partnerId = n.partner.id;
 for (const n of nodes) if (n.type === 'mastery' && n.id < 100) throw new Error('mastery node ids must be 100 or more');
@@ -986,10 +1012,10 @@ for (const start of [1, 2, 3, 4, 5, 6, 7]) {
 	if (dist.size !== nodes.length) throw new Error(`start ${start} reaches only ${dist.size}/${nodes.length}`);
 	if (start === 1) console.log('swordsman start: nearest keystone', Math.min(...nodes.filter(n => n.type === 'key').map(n => dist.get(n.id))), 'steps, farthest node', Math.max(...dist.values()));
 }
-const bad = nodes.filter(n => !n.fx.length && n.type !== 'socket' && n.type !== 'mastery');
+const bad = nodes.filter(n => !n.fx.length && n.type !== 'socket' && n.type !== 'mastery' && n.type !== 'skillpt');
 if (bad.length) throw new Error('node without effect ' + bad[0].key);
 const kinds = t => nodes.filter(n => n.type === t).length;
-console.log(`${nodes.length} nodes, ${edges.length} edges, ${kinds('notable')} notables, ${kinds('key')} keystones, ${kinds('socket')} card sockets, ${kinds('mastery')} masteries`);
+console.log(`${nodes.length} nodes, ${edges.length} edges, ${kinds('notable')} notables, ${kinds('key')} keystones, ${kinds('socket')} card sockets, ${kinds('mastery')} masteries, ${kinds('skillpt')} skill points`);
 
 async function fetchCached(file, url) {
 	const dir = path.join(__dirname, '.cache');
@@ -1036,6 +1062,7 @@ function writeServer() {
 	for (const n of nodes) {
 		data += `\t.adj$[${n.id}] = "${adj[n.id - 1].sort((a, b) => a - b).join(',')}";\n`;
 		if (n.type === 'socket') data += `\t.sock[${n.id}] = 1;\n`;
+		if (n.type === 'skillpt') data += `\t.skp[${n.id}] = 1;\n`;
 		if (n.type === 'key') data += `\t.key[${n.id}] = 1;\n`;
 		if (n.wand) data += `\t.wand[${n.id}] = 1;\n`;
 		if (n.falcon) data += `\t.fal[${n.id}] = 1;\n`;
@@ -1060,7 +1087,7 @@ function writeClient() {
 		lines: Object.fromEntries(ASCEND.flat().map(b => [b.code, b.line])),
 		sectors: SECTORS.map((s, i) => ({ name: s.name, stat: s.stat.toUpperCase(), color: s.color, start: i + 1 })),
 		nodes: nodes.map(n => ({
-			id: n.id, t: { start: 'o', small: 's', notable: 'n', key: 'k', socket: 'j', mastery: 'm', portal: 'p' }[n.type], x: n.x, y: n.y,
+			id: n.id, t: { start: 'o', small: 's', notable: 'n', key: 'k', socket: 'j', mastery: 'm', portal: 'p', skillpt: 'q' }[n.type], x: n.x, y: n.y,
 			n: n.name || n.fx[0].name,
 			fx: n.fx.map(f => ({ t: f.text, v: f.v, m: f.mul })),
 			...(n.info ? { info: n.info } : {}),
