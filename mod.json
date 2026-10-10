@@ -1,8 +1,8 @@
 {
   "name": "path-of-ragnarok",
-  "version": "1.1.0",
-  "author": "rhwski",
-  "description": "Path of Ragnarok (made mainly for pre-renewal): a Path-of-Exile style passive skill tree for every character: your first class picks the origin in the centre, each job level earns a point, and 695 connected nodes give stats, resistances, damage against races and elements, skill boosts (including weak or neglected skills), status effects, auto-casts and free skill recasts, drains, weapon masteries, EXP and drop bonuses, utility skills, 12 trade-off keystones, job-line and rebirth branches, teleport rifts and choose-one masteries. 6 sockets take cards. Search it, open it with Alt+P or @passive.",
+  "version": "1.2.0",
+  "author": "rhewid",
+  "description": "Path of Ragnarok (made mainly for pre-renewal): a Path-of-Exile style passive skill tree for every character: your first class picks the origin in the centre, each job level earns a point, and 695 connected nodes give stats, resistances, damage against races and elements, skill boosts (including weak or neglected skills), status effects, auto-casts and free skill recasts, drains, weapon masteries, EXP and drop bonuses, utility skills, 12 trade-off keystones, job-line and rebirth branches, teleport rifts and choose-one masteries. 6 sockets take cards. Saved builds. An ETC tab spends 5 once-only skill points on any skill of any class. Search it, open it with Alt+P or @passive.",
   "requires": {
     "app": ">=1.4.5",
     "era": "any"
@@ -52,11 +52,13 @@
       "description": "Scales every number on the tree, penalties of keystones included. 100 = as designed, 50 = half, 200 = double."
     },
     {
-      "key": "allow_skills",
-      "type": "boolean",
-      "default": true,
-      "label": "Nodes can teach skills",
-      "description": "Some notables teach a skill (Item Appraisal, Heal, Teleport, Hiding...) and the Blessing / Increase AGI nodes add skill levels. Off: those nodes only give their stat bonuses and any skill they taught is taken back."
+      "key": "skill_points",
+      "type": "number",
+      "default": 5,
+      "min": 0,
+      "max": 50,
+      "label": "Skill points on the ETC tab",
+      "description": "Every character can collect this many skill points once and spend them (one point per level) on any skill of any class from the ETC tab of the window. 0 = switched off: nobody can collect or spend points, skills already learned stay."
     },
     {
       "key": "show_button",

@@ -10,13 +10,18 @@
 //=     F_PT_Bonus on every stat recalculation. F_PT_Bonus reads PT_nodes[]
 //=     and runs the bonus line of each node, so nothing has to be cleared
 //=     (bonus_script_clear can only wipe every script of the player).
-//=   - Skill nodes teach their skills with skill <id>,<lv>,3 (permanent,
-//=     survives job changes). The ids we handed out are kept in PT_gs[].
+//=   - Skill points (setting skill_points, 5 by default): the character collects them once (PT_spc, 0 = not yet
+//=     collected) and spends them on the ETC tab of the window to learn any skill of any class, one point per level.
+//=     What was learned is kept in PT_ls[] (skill id), PT_ll[] (level) and PT_sps (points spent); L_Skills gives it
+//=     with skill <id>,<lv>,3 (permanent, survives job changes). The list of skills a server knows is
+//=     passive_tree_skills.txt ($@PT_skok[id] = max level). PT_gs[] only remains to take back the skills that older
+//=     versions of the tree taught from nodes.
 //=   - The client window (client/index.js) talks to this script through
 //=       @passive <n> state | cards | alloc <id,id,...> | refund <id> | reset
 //=               | socket <node> <card id> | unsocket <node> | choose <node> <option>
+//=               | sclaim | slearn <skill id> <level>
 //=     and gets one line back:
-//=       status|message|start|points|mult|refund|ids|sockets|inventory cards|cards on|socket price|choices|job line|keystone limit|reborn|drop cap|builds|current slot|swap price
+//=       status|message|start|points|mult|refund|ids|sockets|inventory cards|cards on|socket price|choices|job line|keystone limit|reborn|drop cap|builds|current slot|swap price|skill points setting|collected|spent|renewal|learned
 //=     (refund is -1 when refunds are switched off; sockets is node:card,...;
 //=     the inventory list, id:amount,..., only comes with the "cards" request).
 //=     Typing @passive on its own opens the window.
@@ -38,7 +43,7 @@ OnInit:
 	.ppl = callfunc("F_ModSetting", "path-of-ragnarok", "points_per_level", 1);
 	.refund = callfunc("F_ModSetting", "path-of-ragnarok", "refund_zeny", 10000);
 	.canrefund = callfunc("F_ModSetting", "path-of-ragnarok", "allow_refund", 1);
-	.skills = callfunc("F_ModSetting", "path-of-ragnarok", "allow_skills", 1);
+	.sp = callfunc("F_ModSetting", "path-of-ragnarok", "skill_points", 5);
 	$@PT_mult = callfunc("F_ModSetting", "path-of-ragnarok", "value_mult", 100);
 	.cards = callfunc("F_ModSetting", "path-of-ragnarok", "allow_cards", 1);
 	.mvpcards = callfunc("F_ModSetting", "path-of-ragnarok", "mvp_cards", 0);
@@ -74,7 +79,6 @@ OnInit:
 	.adj$[19] = "20";
 	.adj$[20] = "19,21,206,209";
 	.adj$[21] = "20,22";
-	.sk$[21] = "4:5";
 	.adj$[22] = "21,23";
 	.adj$[23] = "22,24,207,210";
 	.adj$[24] = "23,25";
@@ -87,7 +91,6 @@ OnInit:
 	.adj$[31] = "30,32,210";
 	.adj$[32] = "31,33";
 	.adj$[33] = "32,34,213";
-	.sk$[33] = "8:5";
 	.adj$[34] = "33,211";
 	.adj$[35] = "36,212";
 	.adj$[36] = "1,35";
@@ -96,7 +99,6 @@ OnInit:
 	.adj$[39] = "40,194";
 	.adj$[40] = "39,41,271";
 	.adj$[41] = "40,42,214";
-	.sk$[41] = "28:3";
 	.adj$[42] = "41,43,275";
 	.adj$[43] = "42,44";
 	.adj$[44] = "43,45,215,485";
@@ -108,7 +110,6 @@ OnInit:
 	.adj$[50] = "51";
 	.adj$[51] = "50,52,214,217";
 	.adj$[52] = "51,53";
-	.sk$[52] = "22:5";
 	.adj$[53] = "52,54";
 	.adj$[54] = "53,55,215,218";
 	.adj$[55] = "54,56";
@@ -117,12 +118,10 @@ OnInit:
 	.adj$[58] = "57";
 	.adj$[59] = "60,217";
 	.adj$[60] = "59,61,220";
-	.sk$[60] = "35:1";
 	.adj$[61] = "60,62";
 	.adj$[62] = "61,63,218";
 	.adj$[63] = "62,64";
 	.adj$[64] = "63,65,221";
-	.sk$[64] = "34:5";
 	.adj$[65] = "64,219";
 	.adj$[66] = "67,220";
 	.adj$[67] = "2,66";
@@ -137,7 +136,6 @@ OnInit:
 	.adj$[76] = "75,77";
 	.adj$[77] = "76,78,297";
 	.adj$[78] = "77,79,224";
-	.sk$[78] = "9:5";
 	.adj$[79] = "78,80,302";
 	.adj$[80] = "79,198";
 	.adj$[81] = "82";
@@ -155,12 +153,10 @@ OnInit:
 	.adj$[93] = "92,94,226";
 	.adj$[94] = "93,95";
 	.adj$[95] = "94,96,229";
-	.sk$[95] = "24:1,10:1";
 	.adj$[96] = "95,227";
 	.adj$[97] = "98,228";
 	.adj$[98] = "3,97";
 	.adj$[99] = "3,100";
-	.sk$[99] = "26:1";
 	.adj$[100] = "99,229";
 	.adj$[101] = "102,198";
 	.adj$[102] = "101,103,305";
@@ -171,13 +167,11 @@ OnInit:
 	.adj$[107] = "106,108";
 	.adj$[108] = "107,109,314";
 	.adj$[109] = "108,110,232";
-	.sk$[109] = "43:5";
 	.adj$[110] = "109,111,319";
 	.adj$[111] = "110,200";
 	.adj$[112] = "113";
 	.adj$[113] = "112,114,230,233";
 	.adj$[114] = "113,115";
-	.sk$[114] = "44:5";
 	.adj$[115] = "114,116";
 	.adj$[116] = "115,117,231,234";
 	.adj$[117] = "116,118";
@@ -194,7 +188,6 @@ OnInit:
 	.adj$[128] = "129,236";
 	.adj$[129] = "4,128";
 	.adj$[130] = "4,131";
-	.sk$[130] = "45:5";
 	.adj$[131] = "130,237";
 	.adj$[132] = "133,200";
 	.adj$[133] = "132,134,322";
@@ -205,18 +198,15 @@ OnInit:
 	.adj$[138] = "137,139";
 	.adj$[139] = "138,140,331";
 	.adj$[140] = "139,141,240";
-	.sk$[140] = "50:1";
 	.adj$[141] = "140,142,336";
 	.adj$[142] = "141,202";
 	.adj$[143] = "144";
 	.adj$[144] = "143,145,238,241";
 	.adj$[145] = "144,146";
-	.sk$[145] = "51:5";
 	.adj$[146] = "145,147";
 	.adj$[147] = "146,148,239,242";
 	.adj$[148] = "147,149";
 	.adj$[149] = "148,150";
-	.sk$[149] = "53:1";
 	.adj$[150] = "149,151,240,243";
 	.adj$[151] = "150";
 	.adj$[152] = "153,241";
@@ -225,7 +215,6 @@ OnInit:
 	.adj$[155] = "154,156,242";
 	.adj$[156] = "155,157";
 	.adj$[157] = "156,158,245";
-	.sk$[157] = "29:5";
 	.adj$[158] = "157,243";
 	.adj$[159] = "160,244";
 	.adj$[160] = "5,159";
@@ -234,20 +223,17 @@ OnInit:
 	.adj$[163] = "164,202";
 	.adj$[164] = "163,165,339";
 	.adj$[165] = "164,166,246";
-	.sk$[165] = "37:5";
 	.adj$[166] = "165,167,343";
 	.adj$[167] = "166,168";
 	.adj$[168] = "167,169,247,521";
 	.adj$[169] = "168,170";
 	.adj$[170] = "169,171,348";
 	.adj$[171] = "170,172,248";
-	.sk$[171] = "40:1";
 	.adj$[172] = "171,173,353";
 	.adj$[173] = "172,204";
 	.adj$[174] = "175";
 	.adj$[175] = "174,176,246,249";
 	.adj$[176] = "175,177";
-	.sk$[176] = "38:5,39:5";
 	.adj$[177] = "176,178";
 	.adj$[178] = "177,179,247,250";
 	.adj$[179] = "178,180";
@@ -517,7 +503,6 @@ OnInit:
 	.mast[412] = 4;
 	.adj$[413] = "412,414,662";
 	.adj$[414] = "413,415";
-	.sk$[414] = "127:1";
 	.fal[414] = 1;
 	.adj$[415] = "414,416,570";
 	.adj$[416] = "415,417";
@@ -1164,6 +1149,21 @@ OnQuery:
 		} else {
 			setd("PT_b" + .@slot + "_name$", .@bn$);
 		}
+	} else if (.@cmd$ == "sclaim") {
+		.@r$ = callsub(L_SkillClaim);
+		if (.@r$ != "") {
+			.@status$ = "err";
+			.@msg$ = .@r$;
+		} else
+			.@msg$ = "You collected " + PT_spc + " skill points.";
+		callsub L_Apply;
+	} else if (.@cmd$ == "slearn") {
+		.@r$ = callsub(L_SkillLearn, atoi(.@arg$), atoi(.@atcmd_parameters$[3]));
+		if (.@r$ != "") {
+			.@status$ = "err";
+			.@msg$ = .@r$;
+		}
+		callsub L_Apply;
 	} else if (.@cmd$ == "choose") {
 		.@r$ = callsub(L_Choose, atoi(.@arg$), atoi(.@atcmd_parameters$[3]));
 		if (.@r$ != "") {
@@ -1262,16 +1262,14 @@ L_Apply:
 	recalculatestat;
 	return;
 
-// A node flagged .fal gives a falcon (to any class, with the Falconry Mastery skill that L_Skills teaches). We only take
+// A node flagged .fal gives a falcon (to any class). We only take
 // the falcon back if we were the ones who gave it.
 L_Falcon:
 	.@want = 0;
-	if (.skills) {
-		.@n = getarraysize(PT_nodes);
-		for (.@i = 0; .@i < .@n; .@i++) {
-			if (.fal[PT_nodes[.@i]])
-				.@want = 1;
-		}
+	.@n = getarraysize(PT_nodes);
+	for (.@i = 0; .@i < .@n; .@i++) {
+		if (.fal[PT_nodes[.@i]])
+			.@want = 1;
 	}
 	if (.@want) {
 		if (!checkfalcon()) {
@@ -1285,53 +1283,62 @@ L_Falcon:
 	}
 	return;
 
-// Gives the skills of allocated nodes (and takes back the ones we gave that are no longer wanted).
+// Skills: first take back the ones older versions of the tree taught from nodes (PT_gs[]; we only ever recorded a skill the
+// character did not have), then make sure every skill learned with skill points is there at its level.
 L_Skills:
-	.@dc = 0;
-	if (.skills) {
-		.@n = getarraysize(PT_nodes);
-		for (.@i = 0; .@i < .@n; .@i++) {
-			if (.sk$[PT_nodes[.@i]] == "")
-				continue;
-			deletearray .@p$[0], getarraysize(.@p$);
-			explode(.@p$, .sk$[PT_nodes[.@i]], ",");
-			.@c = getarraysize(.@p$);
-			for (.@k = 0; .@k < .@c; .@k++) {
-				deletearray .@q$[0], getarraysize(.@q$);
-				explode(.@q$, .@p$[.@k], ":");
-				.@ds[.@dc] = atoi(.@q$[0]);
-				.@dl[.@dc] = atoi(.@q$[1]);
-				.@dc++;
-			}
-		}
-	}
 	.@g = getarraysize(PT_gs);
-	for (.@i = .@g - 1; .@i >= 0; .@i--) {
-		.@found = 0;
-		for (.@k = 0; .@k < .@dc; .@k++) {
-			if (.@ds[.@k] == PT_gs[.@i])
-				.@found = 1;
-		}
-		if (!.@found) {
-			skill PT_gs[.@i], 0, 3;
-			deletearray PT_gs[.@i], 1;
-		}
-	}
-	for (.@k = 0; .@k < .@dc; .@k++) {
-		.@has = 0;
-		for (.@i = 0; .@i < getarraysize(PT_gs); .@i++) {
-			if (PT_gs[.@i] == .@ds[.@k])
-				.@has = 1;
-		}
-		if (.@has) {
-			if (getskilllv(.@ds[.@k]) != .@dl[.@k])
-				skill .@ds[.@k], .@dl[.@k], 3;
-		} else if (getskilllv(.@ds[.@k]) == 0) {
-			skill .@ds[.@k], .@dl[.@k], 3;
-			PT_gs[getarraysize(PT_gs)] = .@ds[.@k];
-		}
+	for (.@i = 0; .@i < .@g; .@i++)
+		skill PT_gs[.@i], 0, 3;
+	deletearray PT_gs[0], .@g;
+	.@n = getarraysize(PT_ls);
+	for (.@i = 0; .@i < .@n; .@i++) {
+		if (getskilllv(PT_ls[.@i]) < PT_ll[.@i])
+			skill PT_ls[.@i], PT_ll[.@i], 3;
 	}
 	return;
+
+// Collects the skill points. Only once per character.
+L_SkillClaim:
+	if (.sp < 1)
+		return "Skill points are switched off.";
+	if (PT_spc)
+		return "You already collected your skill points.";
+	PT_spc = .sp;
+	return "";
+
+// Learns skill getarg(0) up to level getarg(1) for one point per level. Returns "" or the reason it was refused.
+L_SkillLearn:
+	.@id = getarg(0);
+	.@lv = getarg(1);
+	if (.sp < 1)
+		return "Skill points are switched off.";
+	if (!PT_spc)
+		return "Collect your skill points first.";
+	.@max = $@PT_skok[.@id];
+	if (.@max < 1)
+		return "That skill cannot be learned here.";
+	if (.@lv < 1 || .@lv > .@max)
+		return "That level does not exist.";
+	.@have = getskilllv(.@id);
+	if (.@have >= .@lv)
+		return "You already know that skill at level " + .@have + ".";
+	.@cost = .@lv - .@have;
+	.@left = PT_spc - PT_sps;
+	if (.@left < .@cost)
+		return "That needs " + .@cost + " skill point" + (.@cost > 1 ? "s" : "") + " and you have " + .@left + ".";
+	.@at = -1;
+	.@n = getarraysize(PT_ls);
+	for (.@i = 0; .@i < .@n; .@i++) {
+		if (PT_ls[.@i] == .@id)
+			.@at = .@i;
+	}
+	if (.@at < 0) {
+		.@at = .@n;
+		PT_ls[.@at] = .@id;
+	}
+	PT_ll[.@at] = .@lv;
+	PT_sps += .@cost;
+	return "";
 
 // Allocates one node. Returns "" or the reason it was refused.
 L_Alloc:
@@ -1723,7 +1730,7 @@ L_BuildName:
 	return .@out$;
 
 // One @@reply line (split into parts when long):
-// status|message|start|points|mult|refund|ids|sockets|inventory cards|cards on|socket price|choices|job line
+// status|message|start|points|mult|refund|ids|sockets|inventory cards|cards on|socket price|choices|job line|...|learned
 // getarg(3) = 1 adds the cards in the inventory that can be socketed.
 L_Reply:
 	.@ids$ = "";
@@ -1764,11 +1771,15 @@ L_Reply:
 	.@mm = getarraysize(PT_mn);
 	for (.@i = 0; .@i < .@mm; .@i++)
 		.@choice$ += (.@i ? "," : "") + PT_mn[.@i] + ":" + PT_mv[.@i];
+	.@learned$ = "";
+	.@ls = getarraysize(PT_ls);
+	for (.@i = 0; .@i < .@ls; .@i++)
+		.@learned$ += (.@i ? "," : "") + PT_ls[.@i] + ":" + PT_ll[.@i];
 	.@m = $@PT_mult;
 	if (.@m < 10)
 		.@m = 100;
 	.@r = .canrefund ? .refund : -1;
-	.@out$ = getarg(1) + "|" + getarg(2) + "|" + PT_start + "|" + min(PT_earned, .max) + "|" + .@m + "|" + .@r + "|" + .@ids$ + "|" + .@sock$ + "|" + .@inv$ + "|" + .cards + "|" + .sockzeny + "|" + .@choice$ + "|" + callsub(L_Line) + "|" + .maxkeys + "|" + callsub(L_Upper) + "|" + $@PT_dropcap + "|" + .@bs$ + "|" + PT_slot + "|" + .swapzeny;
+	.@out$ = getarg(1) + "|" + getarg(2) + "|" + PT_start + "|" + min(PT_earned, .max) + "|" + .@m + "|" + .@r + "|" + .@ids$ + "|" + .@sock$ + "|" + .@inv$ + "|" + .cards + "|" + .sockzeny + "|" + .@choice$ + "|" + callsub(L_Line) + "|" + .maxkeys + "|" + callsub(L_Upper) + "|" + $@PT_dropcap + "|" + .@bs$ + "|" + PT_slot + "|" + .swapzeny + "|" + .sp + "|" + PT_spc + "|" + PT_sps + "|" + $@PT_re + "|" + .@learned$;
 	.@len = getstrlen(.@out$);
 	.@parts = (.@len + 149) / 150;
 	for (.@p = 0; .@p < .@parts; .@p++)

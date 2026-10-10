@@ -192,16 +192,6 @@ const C = {
 	atkele: M((e, n) => n + ' Weapon', (e, n) => 'Your attacks become ' + n + ' element', (S, v, e) => `bonus bAtkEle,${e};`),
 };
 
-// skills that a notable can teach: AegisName, id (db/skill_db.yml), label. Level is set where used.
-const SK = {
-	identify: [40, 'Item Appraisal'], discount: [37, 'Discount'], overcharge: [38, 'Overcharge'],
-	pushcart: [39, 'Pushcart'], heal: [28, 'Heal'], cure: [35, 'Cure'], blessing: [34, 'Blessing'],
-	incagi: [29, 'Increase AGI'], ruwach: [24, 'Ruwach'], teleport: [26, 'Teleport'], dp: [22, 'Divine Protection'],
-	hiding: [51, 'Hiding'], steal: [50, 'Steal'], detoxify: [53, 'Detoxify'], owl: [43, "Owl's Eye"],
-	vulture: [44, "Vulture's Eye"], concentration: [45, 'Improve Concentration'], srecovery: [9, 'Increase SP Recovery'],
-	recovery: [4, 'Increase HP Recovery'], falcon: [127, 'Falconry Mastery'], endure: [8, 'Endure'], sight: [10, 'Sight'], firstaid: [142, 'First Aid'],
-};
-
 // ---------------------------------------------------------------- the tree --
 const SECTORS = [
 	{ name: 'Swordsman', stat: 'str', color: '#e0563f' },
@@ -239,62 +229,62 @@ const BOUND = [
 ];
 
 // notables, per sector, in ring order: ring 4 (outer) x2, ring 3 x2, ring 2 x2, ring 1 x2
-// { n: name, fx: [[key, v, ...params]], sk: [[skill, level]] }
+// { n: name, fx: [[key, v, ...params]] }
 const NOTABLE = [
 	[ // Swordsman
 		{ n: 'Sword Drills', fx: [['str', 3], ['atk', 8]] },
 		{ n: 'Thick Hide', fx: [['hp', 150], ['def', 3]] },
-		{ n: "Veteran's Stance", fx: [['hpp', 4], ['hpr', 8]], sk: [['recovery', 5]] },
+		{ n: "Veteran's Stance", fx: [['hpp', 4], ['hpr', 8]] },
 		{ n: 'Cleaving Blows', fx: [['dmg', 4], ['vssize', 6, 'Size_Large', 'Large']] },
 		{ n: 'Giant Slayer', fx: [['boss', 8], ['ignoredef', 8]] },
-		{ n: 'Unshakable', fx: [['reduce', 4], ['reff', 12, 'Eff_Stun', 'Stun']], sk: [['endure', 5]] },
+		{ n: 'Unshakable', fx: [['reduce', 4], ['reff', 12, 'Eff_Stun', 'Stun']] },
 		{ n: "Warlord's Might", fx: [['str', 4], ['vit', 2], ['dmg', 5]] },
 		{ n: 'Bloodied, Unbowed', fx: [['hpp', 6], ['hpgain', 8]] },
 	],
 	[ // Acolyte
-		{ n: 'Lay on Hands', fx: [['heal', 8], ['vit', 2]], sk: [['heal', 3]] },
+		{ n: 'Lay on Hands', fx: [['heal', 8], ['vit', 2]] },
 		{ n: 'Pious Shield', fx: [['mdef', 4], ['hpp', 3]] },
-		{ n: 'Blessed Warding', fx: [['rrace', 6, 'RC_Undead', 'Undead'], ['rrace', 6, 'RC_Demon', 'Demon']], sk: [['dp', 5]] },
+		{ n: 'Blessed Warding', fx: [['rrace', 6, 'RC_Undead', 'Undead'], ['rrace', 6, 'RC_Demon', 'Demon']] },
 		{ n: "Healer's Touch", fx: [['heal', 10], ['healin', 8]] },
-		{ n: 'Cleansing Light', fx: [['reff', 20, 'Eff_Curse', 'Curse'], ['reff', 20, 'Eff_Silence', 'Silence']], sk: [['cure', 1]] },
-		{ n: 'Angelic Boons', fx: [['spp', 4], ['spotion', 8]], sk: [['blessing', 5]] },
+		{ n: 'Cleansing Light', fx: [['reff', 20, 'Eff_Curse', 'Curse'], ['reff', 20, 'Eff_Silence', 'Silence']] },
+		{ n: 'Angelic Boons', fx: [['spp', 4], ['spotion', 8]] },
 		{ n: "Martyr's Resolve", fx: [['hpp', 6], ['reduce', 4]] },
 		{ n: 'Sanctuary Keeper', fx: [['heal', 12], ['hpr', 12], ['potion', 10]] },
 	],
 	[ // Mage
 		{ n: 'Arcane Studies', fx: [['int', 3], ['matk', 8]] },
-		{ n: 'Mana Well', fx: [['sp', 40], ['spr', 8]], sk: [['srecovery', 5]] },
+		{ n: 'Mana Well', fx: [['sp', 40], ['spr', 8]] },
 		{ n: 'Focused Mind', fx: [['cast', 5], ['matkp', 3]] },
 		{ n: 'Elemental Affinity', fx: [['mele', 6, 'Ele_Fire', 'Fire'], ['mele', 6, 'Ele_Water', 'Water'], ['mele', 6, 'Ele_Wind', 'Wind'], ['mele', 6, 'Ele_Earth', 'Earth']] },
 		{ n: 'Mind Over Matter', fx: [['spp', 5], ['spcost', 5]] },
-		{ n: 'Third Eye', fx: [['truesight']], sk: [['ruwach', 1], ['sight', 1]] },
+		{ n: 'Third Eye', fx: [['truesight']] },
 		{ n: "Archmage's Focus", fx: [['matkp', 6], ['int', 4], ['ignoremdef', 8]] },
-		{ n: 'Blink', fx: [['cast', 4], ['spp', 3]], sk: [['teleport', 1]] },
+		{ n: 'Blink', fx: [['cast', 4], ['spp', 3]] },
 	],
 	[ // Archer
 		{ n: 'Steady Aim', fx: [['dex', 3], ['hit', 8]] },
-		{ n: 'Quick Draw', fx: [['aspd', 2], ['crit', 3]], sk: [['owl', 5]] },
-		{ n: "Hawk's Eye", fx: [['crit', 4], ['hit', 10]], sk: [['vulture', 5]] },
+		{ n: 'Quick Draw', fx: [['aspd', 2], ['crit', 3]] },
+		{ n: "Hawk's Eye", fx: [['crit', 4], ['hit', 10]] },
 		{ n: 'Marksman', fx: [['ranged', 6], ['dmg', 3]] },
 		{ n: 'Beast Hunter', fx: [['vsrace', 6, 'RC_Brute', 'Brute'], ['vsrace', 6, 'RC_Insect', 'Insect'], ['vsrace', 6, 'RC_Plant', 'Plant']] },
 		{ n: 'Piercing Arrows', fx: [['ignoredef', 8], ['critdmg', 8]] },
 		{ n: 'Eagle Eye', fx: [['dex', 4], ['agi', 2], ['ranged', 8]] },
-		{ n: 'Steady Hands', fx: [['aspd', 3], ['cast', 3]], sk: [['concentration', 5]] },
+		{ n: 'Steady Hands', fx: [['aspd', 3], ['cast', 3]] },
 	],
 	[ // Thief
 		{ n: 'Nimble Feet', fx: [['agi', 3], ['flee', 8]] },
-		{ n: 'Light Fingers', fx: [['steal', 10], ['luk', 1]], sk: [['steal', 1]] },
-		{ n: 'Veil of Shadows', fx: [['speed', 4], ['flee', 6]], sk: [['hiding', 5]] },
-		{ n: 'Venom Training', fx: [['reff', 30, 'Eff_Poison', 'Poison'], ['agi', 1]], sk: [['detoxify', 1]] },
+		{ n: 'Light Fingers', fx: [['steal', 10], ['luk', 1]] },
+		{ n: 'Veil of Shadows', fx: [['speed', 4], ['flee', 6]] },
+		{ n: 'Venom Training', fx: [['reff', 30, 'Eff_Poison', 'Poison'], ['agi', 1]] },
 		{ n: 'Deadly Edge', fx: [['crit', 6], ['critdmg', 10]] },
-		{ n: 'Lightning Reflexes', fx: [['aspd', 4], ['flee', 10]], sk: [['incagi', 5]] },
+		{ n: 'Lightning Reflexes', fx: [['aspd', 4], ['flee', 10]] },
 		{ n: 'Phantom Strikes', fx: [['double', 6], ['flee2', 3]] },
 		{ n: 'Evasive Maneuvers', fx: [['flee2', 4], ['speed', 6], ['critdef', 10]] },
 	],
 	[ // Merchant
-		{ n: 'Haggler', fx: [['luk', 3]], sk: [['discount', 5]] },
-		{ n: "Appraiser's Eye", fx: [['luk', 2], ['weight', 200]], sk: [['identify', 1]] },
-		{ n: 'Peddler', fx: [['weight', 300], ['potion', 6]], sk: [['overcharge', 5], ['pushcart', 5]] },
+		{ n: 'Haggler', fx: [['luk', 3]] },
+		{ n: "Appraiser's Eye", fx: [['luk', 2], ['weight', 200]] },
+		{ n: 'Peddler', fx: [['weight', 300], ['potion', 6]] },
 		{ n: 'Prospector', fx: [['drop', 0.05], ['exp', 3]] },
 		{ n: 'Market Savvy', fx: [['potion', 15], ['spotion', 10], ['weight', 300]] },
 		{ n: "Fortune's Favour", fx: [['luk', 4], ['flee2', 3], ['crit', 4]] },
@@ -401,22 +391,21 @@ const SHAPE = {
 const SOCKET_INFO = 'Card socket. Put a card from your inventory in here and its bonuses apply to you as if you wore it. Weapon cards count for the weapon you hold. Each card can be socketed once.';
 
 // ---------------------------------------------------------------- build --
-const nodes = [];       // { id, key, type, x, y, name, fx[], sk[], info }
+const nodes = [];       // { id, key, type, x, y, name, fx[], info }
 const edges = [];       // { a, b, arc? }
 const byKey = new Map();
 const rad = d => d * Math.PI / 180;
 const secAngle = s => -90 + s * 60;
 const pos = (r, deg) => [Math.round(r * Math.cos(rad(deg)) * 10) / 10, Math.round(r * Math.sin(rad(deg)) * 10) / 10];
 
-function add(key, type, x, y, name, fx, sk = [], info = '') {
-	const node = { id: 0, key, type, x, y, name, fx, sk, info };
+function add(key, type, x, y, name, fx, info = '') {
+	const node = { id: 0, key, type, x, y, name, fx, info };
 	nodes.push(node);
 	byKey.set(key, node);
 	return node;
 }
 const link = (a, b, arc, portal) => edges.push({ a, b, arc: !!arc, portal: !!portal });
 const effects = list => list.map(([k, ...rest]) => C[k](...rest));
-const skills = list => (list || []).map(([n, lv]) => ({ id: SK[n][0], lv, name: SK[n][1] }));
 
 // start nodes first so they get ids 1..6, the hub 7. The origins sit in the centre (ring KEY_R); the tree grows outward and the
 // six keystones guard the borders between the regions on the rim.
@@ -437,7 +426,7 @@ for (let s = 0; s < 6; s++) {
 			if (k === 1 && j === 2) continue;
 			if (ni >= 0) {
 				const def = NOTABLE[s][(4 - k) * 2 + ni];
-				add(`R${k}.${s}.${j}`, 'notable', x, y, def.n, effects(def.fx), skills(def.sk));
+				add(`R${k}.${s}.${j}`, 'notable', x, y, def.n, effects(def.fx));
 			} else {
 				const edge = j === 0 || j === g.n - 1;
 				const pool = edge ? BOUND[j === 0 ? (s + 5) % 6 : s] : POOL[s];
@@ -505,7 +494,7 @@ const NOTABLE5 = [
 	],
 	[ // Archer
 		{ n: 'Crippling Shot', fx: [['addeff', 6, 'Eff_Blind', 'Blind'], ['ranged', 5]] },
-		{ n: 'Falconry', fx: [['autospell', 4, 'HT_BLITZBEAT', 3, 'Blitz Beat'], ['skatk', 8, 'HT_BLITZBEAT', 'Blitz Beat']], sk: [['falcon', 1]], falcon: true },
+		{ n: 'Falconry', fx: [['autospell', 4, 'HT_BLITZBEAT', 3, 'Blitz Beat'], ['skatk', 8, 'HT_BLITZBEAT', 'Blitz Beat']], falcon: true },
 		{ n: 'Trapper', fx: [['skatk', 8, 'HT_BLASTMINE', 'Blast Mine'], ['skatk', 8, 'HT_CLAYMORETRAP', 'Claymore Trap'], ['skatk', 8, 'HT_LANDMINE', 'Land Mine']] },
 		{ n: 'Dead Eye', fx: [['hit', 15], ['crit', 8], ['critdmg', 10]] },
 	],
@@ -638,7 +627,7 @@ for (let s = 0; s < 6; s++) {
 			const x = Math.round((anchor.x + d * u[0] + l * t[0]) * 10) / 10, y = Math.round((anchor.y + d * u[1] + l * t[1]) * 10) / 10;
 			const key = `C${s}.${j}.${i}`;
 			if (i === sh.at.length - 1) {
-				return endType === 'socket' ? add(key, 'socket', x, y, end.n, [], [], SOCKET_INFO) : add(key, 'notable', x, y, end.n, effects(end.fx));
+				return endType === 'socket' ? add(key, 'socket', x, y, end.n, [], SOCKET_INFO) : add(key, 'notable', x, y, end.n, effects(end.fx));
 			}
 			return add(key, 'small', x, y, null, effects([smalls[i]]));
 		});
@@ -655,8 +644,8 @@ for (let s = 0; s < 6; s++) {
 		const ni = RING5.notable.indexOf(j), mi = RING5.mastery.indexOf(j);
 		if (ni >= 0) {
 			const def = NOTABLE5[s][ni];
-			const node = add(key, 'notable', x, y, def.n, effects(def.fx), skills(def.sk));
-			if (def.falcon) { node.falcon = true; node.info = 'Gives you a falcon and Falconry Mastery, so the Blitz Beat nodes work for any class.'; }
+			const node = add(key, 'notable', x, y, def.n, effects(def.fx));
+			if (def.falcon) { node.falcon = true; node.info = 'Gives you a falcon, so the Blitz Beat nodes work for any class.'; }
 			if (def.rs) node.rs = { id: SKREQ_ID[def.rs[0]], lv: def.rs[1], name: SKREQ[def.rs[0]] };
 		} else if (mi >= 0) {
 			const def = MASTERY5[s][mi];
@@ -1046,7 +1035,6 @@ function writeServer() {
 	let data = '';
 	for (const n of nodes) {
 		data += `\t.adj$[${n.id}] = "${adj[n.id - 1].sort((a, b) => a - b).join(',')}";\n`;
-		if (n.sk.length) data += `\t.sk$[${n.id}] = "${n.sk.map(k => `${k.id}:${k.lv}`).join(',')}";\n`;
 		if (n.type === 'socket') data += `\t.sock[${n.id}] = 1;\n`;
 		if (n.type === 'key') data += `\t.key[${n.id}] = 1;\n`;
 		if (n.wand) data += `\t.wand[${n.id}] = 1;\n`;
@@ -1075,7 +1063,6 @@ function writeClient() {
 			id: n.id, t: { start: 'o', small: 's', notable: 'n', key: 'k', socket: 'j', mastery: 'm', portal: 'p' }[n.type], x: n.x, y: n.y,
 			n: n.name || n.fx[0].name,
 			fx: n.fx.map(f => ({ t: f.text, v: f.v, m: f.mul })),
-			sk: n.sk.map(k => ({ n: k.name, lv: k.lv })),
 			...(n.info ? { info: n.info } : {}),
 			...(n.wand ? { w: 1 } : {}),
 			...(n.partner ? { pt: n.partner.id } : {}),
@@ -1148,6 +1135,72 @@ async function writeCards() {
 	}
 }
 
+// ---------------------------------------------------------------- learnable skills --
+// The skill points on the ETC tab can learn any player skill of any class. The groups below name the skill-name prefixes
+// (rAthena AegisName, "AL_HEAL" -> AL) that belong to each class; 'only: re' groups only exist on a renewal server.
+// Written as client/skill-data.js (union of both eras, the window picks by the era the server reports) and
+// as npc/passive_tree_skills.txt, once per era (the server only accepts what its own skill_db has).
+const SKILL_GROUPS = [
+	['Novice', ['NV']],
+	['Swordman', ['SM']], ['Mage', ['MG']], ['Archer', ['AC']], ['Acolyte', ['AL']], ['Merchant', ['MC']], ['Thief', ['TF']],
+	['Knight', ['KN']], ['Crusader', ['CR']], ['Priest', ['PR']], ['Monk', ['MO']], ['Wizard', ['WZ']], ['Sage', ['SA']],
+	['Hunter', ['HT']], ['Bard / Dancer', ['BA', 'DC', 'BD']], ['Assassin', ['AS']], ['Rogue', ['RG']], ['Blacksmith', ['BS']], ['Alchemist', ['AM']],
+	['Lord Knight', ['LK']], ['Paladin', ['PA']], ['High Priest', ['HP']], ['Champion', ['CH']], ['High Wizard', ['HW']], ['Professor', ['PF']],
+	['Sniper', ['SN']], ['Clown / Gypsy', ['CG']], ['Assassin Cross', ['ASC']], ['Stalker', ['ST']], ['Whitesmith', ['WS']],
+	['Taekwon', ['TK']], ['Star Gladiator', ['SG']], ['Soul Linker', ['SL']], ['Gunslinger', ['GS']], ['Ninja', ['NJ']],
+	['Rune Knight', ['RK'], 're'], ['Warlock', ['WL'], 're'], ['Guillotine Cross', ['GC'], 're'], ['Arch Bishop', ['AB'], 're'], ['Ranger', ['RA'], 're'],
+	['Mechanic', ['NC'], 're'], ['Shadow Chaser', ['SC'], 're'], ['Royal Guard', ['LG'], 're'], ['Sura', ['SR'], 're'],
+	['Minstrel / Wanderer', ['MI', 'WA', 'WM'], 're'], ['Sorcerer', ['SO'], 're'], ['Genetic', ['GN'], 're'], ['Rebellion', ['RL'], 're'],
+	['Star Emperor', ['SJ'], 're'], ['Soul Reaper', ['SP'], 're'], ['Kagerou / Oboro', ['KO', 'KG', 'OB'], 're'], ['Summoner', ['SU'], 're'],
+	['4th class', ['DK', 'AG', 'IQ', 'IG', 'CD', 'SHC', 'MT', 'BO', 'ABC', 'WH', 'TR', 'EM', 'SH', 'NW', 'SOA', 'HN', 'SKE', 'SS'], 're'],
+];
+const SKILL_SKIP = new Set(['NV_BASIC']);
+function parseSkills(yml) {
+	const out = new Map();
+	for (const block of yml.split(/^  - Id: /m).slice(1)) {
+		const id = Number(/^(\d+)/.exec(block)[1]);
+		const name = /^    Name: (\w+)/m.exec(block)?.[1];
+		const desc = /^    Description: (.*)$/m.exec(block)?.[1]?.trim();
+		const max = Number(/^    MaxLevel: (\d+)/m.exec(block)?.[1] || 0);
+		if (!name || !desc || !max || SKILL_SKIP.has(name)) continue;
+		const prefix = name.split('_')[0];
+		const gi = SKILL_GROUPS.findIndex(g => g[1].includes(prefix));
+		if (gi >= 0) out.set(id, { id, name, desc: desc.replace(/^"|"$/g, ''), max, group: gi });
+	}
+	return out;
+}
+async function writeSkills() {
+	const eras = {};
+	for (const era of ['pre-re', 're']) eras[era] = parseSkills(await fetchCached(`skill_db_${era}.yml`, `${RA}${era}/skill_db.yml`));
+	// the window's catalogue: [id, name, max level in pre-renewal (0 = not there), max level in renewal, group]
+	const ids = [...new Set([...eras['pre-re'].keys(), ...eras.re.keys()])].sort((a, b) => a - b);
+	const rows = [];
+	for (const id of ids) {
+		const pre = eras['pre-re'].get(id), re = eras.re.get(id);
+		const e = re || pre;
+		const preOk = pre && !SKILL_GROUPS[pre.group][2];
+		const reOk = !!re;
+		if (!preOk && !reOk) continue;
+		rows.push([id, e.desc, preOk ? pre.max : 0, reOk ? re.max : 0, e.group]);
+	}
+	const groups = SKILL_GROUPS.map(g => ({ n: g[0], re: g[2] === 're' ? 1 : 0 }));
+	fs.writeFileSync(path.join(root, 'client', 'skill-data.js'), `// Generated by tools/build-tree.js. Do not edit by hand.
+// SKILLS rows: [id, name, max level pre-renewal (0 = none), max level renewal (0 = none), group]
+export const SKILL_GROUPS = ${JSON.stringify(groups)};
+export const SKILLS = ${JSON.stringify(rows)};
+`);
+	const tpl = fs.readFileSync(path.join(__dirname, 'passive_tree_skills.template.txt'), 'utf8');
+	for (const [dir, era] of [['', 're'], ['pre-renewal', 'pre-re']]) {
+		const list = rows.filter(r => r[era === 're' ? 3 : 2] > 0);
+		const ok = list.map(r => `\t$@PT_skok[${r[0]}] = ${r[era === 're' ? 3 : 2]};`).join('\n');
+		const out = tpl.replace('//@@ERA@@', () => `\t$@PT_re = ${era === 're' ? 1 : 0};`).replace('//@@OK@@', () => ok);
+		const target = path.join(root, dir, 'npc', 'passive_tree_skills.txt');
+		fs.mkdirSync(path.dirname(target), { recursive: true });
+		fs.writeFileSync(target, out);
+		console.log(`${era}: ${list.length} learnable skills`);
+	}
+}
+
 (async () => {
 	// every skill the nodes name must exist in both eras' skill_db.yml
 	const used = new Set();
@@ -1162,4 +1215,5 @@ async function writeCards() {
 	writeServer();
 	writeClient();
 	await writeCards();
+	await writeSkills();
 })().catch(e => { console.error(e); process.exit(1); });
