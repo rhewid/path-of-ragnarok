@@ -13,7 +13,7 @@ A mod for [Ragnarok Offline](https://github.com/Flux159/ragnarokoffline.app) tha
 
 **Designed mainly for pre-renewal.** The tree was built and tested on a pre-renewal server; the numbers (stat and damage values, skill boosts, auto-cast chances, the 50-point cap) are balanced for pre-renewal gameplay. It also loads on renewal (it ships a separate card table for each era and only uses bonuses both eras have), but renewal has not been tested and its values have not been balanced for renewal's stronger skills and higher stats.
 
-Needs Ragnarok Offline 1.4.5 or newer. The core (allocating, refunding, stats) is confirmed in game; some newer parts are not yet (see "Known limits").
+Needs Ragnarok Offline 1.4.5 or newer. The core (allocating, refunding, stats) and the skill points are confirmed in game; some other parts are not yet (see "Known limits").
 
 ## Install
 
@@ -259,7 +259,7 @@ Press **Apply** after changing settings; the server restarts. Reload the client 
 - **Auto-cast nodes** use rAthena's `bAutoSpell` from inside the same bonus script. It is the same command cards use, but it has not been tried from a bonus script here; if a chance never fires, tell me.
 - Status-on-hit chances (`bAddEff`) only trigger on weapon attacks, not on spells.
 - The "Hard Cap" keystone (`bAbsorbDmgMaxHP2`) uses the official behaviour: a hit above the cap is cut down to it.
-- **Skill points** (1.2.0) are new and not yet confirmed in game: please test the outer ring, collecting, learning a skill of another class (it may need a relog before the skill window shows it), and Max.
+- **Skill points** (1.2.x) are confirmed in game: the outer ring, collecting, learning a skill of another class, and the skill reset when a spent skill point node is taken back, reset or swapped out by a build. A learned skill of a class that does not normally have it may need a relog before the skill window shows it. Skill prerequisites are ignored on purpose, and some skills still need their weapon, a falcon, a cart or a mount to be usable.
 - **Saved builds** are new in 1.1.0 and not yet confirmed in game. They are stored in character variables (`PT_b<slot>_...`). Loading a build is not atomic: if the server stops halfway the tree may be partly rebuilt (load the slot again).
 - A mastery counts as allocated but gives nothing until an option is picked.
 
