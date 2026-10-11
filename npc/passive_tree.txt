@@ -12,9 +12,10 @@
 //=     (bonus_script_clear can only wipe every script of the player).
 //=   - Skill points: ten nodes on the outer ring of the tree (.skp) give one skill point each while they are allocated
 //=     (setting skill_points caps the total, 10 by default). They are spent on the Skills tab of the window to learn any
-//=     skill of any class, one point per level. Points spent are PT_sps: that many skill nodes, and the chain of nodes
-//=     that connects them to the start, are LOCKED (L_Locked) and cannot be refunded, reset or swapped out by a build,
-//=     so the passive points they cost stay spent for good.
+//=     skill of any class, one point per level. Points spent are PT_sps. When fewer skill nodes are allocated than
+//=     points were spent (a node was refunded, the tree reset, a build loaded, ...) L_SkillReset takes every learned
+//=     skill back (PT_lo[] keeps the level the character had before) and gives all points back to be spent anew. The
+//=     refund / reset / build commands ask for a repeat ("confirm" argument 1) before that happens.
 //=     What was learned is kept in PT_ls[] (skill id), PT_ll[] (level) and PT_sps (points spent); L_Skills gives it
 //=     with skill <id>,<lv>,3 (permanent, survives job changes). The list of skills a server knows is
 //=     passive_tree_skills.txt ($@PT_skok[id] = max level). PT_gs[] only remains to take back the skills that older
@@ -1118,14 +1119,14 @@ OnQuery:
 		}
 		callsub L_Apply;
 	} else if (.@cmd$ == "refund") {
-		.@r$ = callsub(L_Refund, atoi(.@arg$));
+		.@r$ = callsub(L_Refund, atoi(.@arg$), atoi(.@atcmd_parameters$[3]));
 		if (.@r$ != "") {
 			.@status$ = "err";
 			.@msg$ = .@r$;
 		}
 		callsub L_Apply;
 	} else if (.@cmd$ == "reset") {
-		.@r$ = callsub(L_Reset);
+		.@r$ = callsub(L_Reset, atoi(.@arg$));
 		if (.@r$ != "") {
 			.@status$ = "err";
 			.@msg$ = .@r$;
@@ -1158,7 +1159,7 @@ OnQuery:
 			.@msg$ = "Saved the tree in slot " + .@slot + ".";
 		}
 	} else if (.@cmd$ == "bload") {
-		.@msg$ = callsub(L_BuildLoad, atoi(.@arg$));
+		.@msg$ = callsub(L_BuildLoad, atoi(.@arg$), atoi(.@atcmd_parameters$[3]));
 		if (!@pt_bok)
 			.@status$ = "err";
 		callsub L_Apply;
@@ -1194,6 +1195,10 @@ OnQuery:
 			.@msg$ = .@r$;
 		}
 		callsub L_Apply;
+	}
+	if (@pt_sreset) {
+		.@msg$ += (.@msg$ != "" ? " " : "") + "Your learned skills were reset: learn them again on the Skills tab.";
+		@pt_sreset = 0;
 	}
 	if (.@status$ != "ok")
 		debugmes "[path-of-ragnarok] refused: " + .@msg$;
@@ -1313,6 +1318,10 @@ L_Skills:
 	for (.@i = 0; .@i < .@g; .@i++)
 		skill PT_gs[.@i], 0, 3;
 	deletearray PT_gs[0], .@g;
+	if (PT_sps > 0 && .sp > 0) {
+		if (min(callsub(L_SkillCount), .sp) < PT_sps)
+			callsub L_SkillReset;
+	}
 	.@n = getarraysize(PT_ls);
 	for (.@i = 0; .@i < .@n; .@i++) {
 		if (getskilllv(PT_ls[.@i]) < PT_ll[.@i])
@@ -1320,7 +1329,7 @@ L_Skills:
 	}
 	return;
 
-// Skill points the character holds right now: allocated skill point nodes, up to the setting.
+// Number of skill point nodes allocated (the points held are min(this, .sp)).
 L_SkillCount:
 	.@c = 0;
 	.@n = getarraysize(PT_nodes);
@@ -1328,68 +1337,19 @@ L_SkillCount:
 		if (.skp[PT_nodes[.@i]])
 			.@c++;
 	}
-	return min(.@c, .sp);
+	return .@c;
 
-// Fills @pt_lock[node id] = 1 for the nodes that must stay allocated: PT_sps skill point nodes (the nearest ones to the
-// start) and every node on the chain that connects them. Nothing is locked while no skill point was spent.
-L_Locked:
-	deletearray @pt_lock[0], getarraysize(@pt_lock);
-	if (PT_sps < 1)
-		return;
-	.@n = getarraysize(PT_nodes);
+// Takes every learned skill back and gives the skill points back. Run when fewer skill nodes are allocated than points spent.
+L_SkillReset:
+	.@n = getarraysize(PT_ls);
 	for (.@i = 0; .@i < .@n; .@i++)
-		.@in[PT_nodes[.@i]] = 1;
-	.@seen[PT_start] = 1;
-	.@q[0] = PT_start;
-	.@qh = 0;
-	.@qt = 1;
-	.@got = 0;
-	while (.@qh < .@qt && .@got < PT_sps) {
-		.@cur = .@q[.@qh];
-		.@qh++;
-		deletearray .@a$[0], getarraysize(.@a$);
-		explode(.@a$, .adj$[.@cur], ",");
-		.@c = getarraysize(.@a$);
-		for (.@k = 0; .@k < .@c && .@got < PT_sps; .@k++) {
-			.@x = atoi(.@a$[.@k]);
-			if (.@in[.@x] && !.@seen[.@x]) {
-				.@seen[.@x] = 1;
-				.@par[.@x] = .@cur;
-				.@q[.@qt] = .@x;
-				.@qt++;
-				if (.skp[.@x]) {
-					.@got++;
-					for (.@w = .@x; .@w && .@w != PT_start; .@w = .@par[.@w])
-						@pt_lock[.@w] = 1;
-				}
-			}
-		}
-	}
-	return;
-
-// Removes every allocated node that is not locked (run L_Locked first). Cards of removed sockets go back to the
-// inventory, mastery choices of removed nodes are dropped.
-L_Prune:
-	.@s = getarraysize(PT_sn);
-	for (.@i = .@s - 1; .@i >= 0; .@i--) {
-		if (!@pt_lock[PT_sn[.@i]]) {
-			getitem PT_sc[.@i], 1;
-			deletearray PT_sn[.@i], 1;
-			deletearray PT_sc[.@i], 1;
-		}
-	}
-	.@m = getarraysize(PT_mn);
-	for (.@i = .@m - 1; .@i >= 0; .@i--) {
-		if (!@pt_lock[PT_mn[.@i]]) {
-			deletearray PT_mn[.@i], 1;
-			deletearray PT_mv[.@i], 1;
-		}
-	}
-	.@n = getarraysize(PT_nodes);
-	for (.@i = .@n - 1; .@i >= 0; .@i--) {
-		if (!@pt_lock[PT_nodes[.@i]])
-			deletearray PT_nodes[.@i], 1;
-	}
+		skill PT_ls[.@i], PT_lo[.@i], 3;
+	deletearray PT_ls[0], .@n;
+	deletearray PT_ll[0], getarraysize(PT_ll);
+	deletearray PT_lo[0], getarraysize(PT_lo);
+	PT_sps = 0;
+	@pt_sreset = 1;
+	dispbottom "[Passive Tree] A skill point node was taken back: your learned skills were reset. Learn them again on the Skills tab.";
 	return;
 
 // Learns skill getarg(0) up to level getarg(1) for one point per level. Returns "" or the reason it was refused.
@@ -1398,7 +1358,7 @@ L_SkillLearn:
 	.@lv = getarg(1);
 	if (.sp < 1)
 		return "Skill points are switched off.";
-	.@total = callsub(L_SkillCount);
+	.@total = min(callsub(L_SkillCount), .sp);
 	if (.@total < 1)
 		return "Collect skill points on the outer ring of the tree first.";
 	.@max = $@PT_skok[.@id];
@@ -1422,6 +1382,7 @@ L_SkillLearn:
 	if (.@at < 0) {
 		.@at = .@n;
 		PT_ls[.@at] = .@id;
+		PT_lo[.@at] = .@have;
 	}
 	PT_ll[.@at] = .@lv;
 	PT_sps += .@cost;
@@ -1499,9 +1460,10 @@ L_Refund:
 	}
 	if (.@at < 0)
 		return "That node is not allocated.";
-	callsub L_Locked;
-	if (@pt_lock[.@id])
-		return "Your learned skills use this skill point: it and the path to it stay allocated.";
+	if (.skp[.@id] && PT_sps > 0 && .sp > 0 && getarg(1) != 1) {
+		if (min(callsub(L_SkillCount) - 1, .sp) < PT_sps)
+			return "Taking this skill point back resets your learned skills (you can learn them again). Refund it again to confirm. [confirm]";
+	}
 	.@seen[PT_start] = 1;
 	.@q[0] = PT_start;
 	.@qh = 0;
@@ -1549,23 +1511,16 @@ L_Refund:
 	deletearray PT_nodes[.@at], 1;
 	return "";
 
-// Takes every node back that is not locked by spent skill points. Costs the refund price once per node.
+// Takes every node back. Costs the refund price once per node. getarg(0) = 1 confirms losing the learned skills.
 L_Reset:
 	if (!.canrefund)
 		return "Refunds are switched off.";
-	callsub L_Locked;
 	.@n = getarraysize(PT_nodes);
-	.@rm = 0;
-	for (.@i = 0; .@i < .@n; .@i++) {
-		if (!@pt_lock[PT_nodes[.@i]])
-			.@rm++;
-	}
-	if (.@rm < 1) {
-		if (.@n < 1)
-			return "";
-		return "Nothing can be refunded: your learned skills use the skill point nodes and the path to them.";
-	}
-	.@cost = .refund * .@rm;
+	if (.@n < 1)
+		return "";
+	if (PT_sps > 0 && getarg(0) != 1)
+		return "Resetting the tree resets your learned skills too (you can learn them again). Reset again to confirm. [confirm]";
+	.@cost = .refund * .@n;
 	if (Zeny < .@cost)
 		return "You need " + .@cost + " zeny.";
 	.@s = getarraysize(PT_sc);
@@ -1574,7 +1529,13 @@ L_Reset:
 			return "You cannot carry all the socketed cards back right now.";
 	}
 	Zeny -= .@cost;
-	callsub L_Prune;
+	for (.@i = 0; .@i < .@s; .@i++)
+		getitem PT_sc[.@i], 1;
+	deletearray PT_sn[0], .@s;
+	deletearray PT_sc[0], .@s;
+	deletearray PT_nodes[0], .@n;
+	deletearray PT_mn[0], getarraysize(PT_mn);
+	deletearray PT_mv[0], getarraysize(PT_mv);
 	return "";
 
 // Index of the socket node getarg(0) in PT_sn[], or -1.
@@ -1762,11 +1723,24 @@ L_BuildLoad:
 		if (!checkweight(PT_sc[.@i], 1))
 			return "You cannot carry the socketed cards back right now.";
 	}
+	// a build with fewer skill point nodes than the points you spent resets your learned skills: ask first
+	.@bsk = 0;
+	.@bnc = getd(.@p$ + "nc");
+	for (.@i = 0; .@i < .@bnc; .@i++) {
+		if (.skp[getd(.@p$ + "n[" + .@i + "]")])
+			.@bsk++;
+	}
+	if (PT_sps > 0 && .sp > 0 && min(.@bsk, .sp) < PT_sps && getarg(1) != 1)
+		return "That build has only " + .@bsk + " skill point node" + (.@bsk != 1 ? "s" : "") + ": loading it resets your learned skills (you can learn them again). Load it again to confirm. [confirm]";
 	Zeny -= .swapzeny;
-	// put the current tree away: cards back to the inventory, everything cleared except the nodes that spent skill
-	// points lock (the replay below skips those: they are already allocated)
-	callsub L_Locked;
-	callsub L_Prune;
+	// put the current tree away: cards back to the inventory, everything cleared
+	for (.@i = 0; .@i < .@c; .@i++)
+		getitem PT_sc[.@i], 1;
+	deletearray PT_sn[0], .@c;
+	deletearray PT_sc[0], .@c;
+	deletearray PT_nodes[0], getarraysize(PT_nodes);
+	deletearray PT_mn[0], getarraysize(PT_mn);
+	deletearray PT_mv[0], getarraysize(PT_mv);
 	// replay the nodes: repeat until a whole pass allocates nothing (a node can be saved before the one it hangs off)
 	.@nc = getd(.@p$ + "nc");
 	for (.@i = 0; .@i < .@nc; .@i++) {
@@ -1868,7 +1842,7 @@ L_Reply:
 	if (.@m < 10)
 		.@m = 100;
 	.@r = .canrefund ? .refund : -1;
-	.@out$ = getarg(1) + "|" + getarg(2) + "|" + PT_start + "|" + min(PT_earned, .max) + "|" + .@m + "|" + .@r + "|" + .@ids$ + "|" + .@sock$ + "|" + .@inv$ + "|" + .cards + "|" + .sockzeny + "|" + .@choice$ + "|" + callsub(L_Line) + "|" + .maxkeys + "|" + callsub(L_Upper) + "|" + $@PT_dropcap + "|" + .@bs$ + "|" + PT_slot + "|" + .swapzeny + "|" + .sp + "|" + callsub(L_SkillCount) + "|" + PT_sps + "|" + $@PT_re + "|" + .@learned$;
+	.@out$ = getarg(1) + "|" + getarg(2) + "|" + PT_start + "|" + min(PT_earned, .max) + "|" + .@m + "|" + .@r + "|" + .@ids$ + "|" + .@sock$ + "|" + .@inv$ + "|" + .cards + "|" + .sockzeny + "|" + .@choice$ + "|" + callsub(L_Line) + "|" + .maxkeys + "|" + callsub(L_Upper) + "|" + $@PT_dropcap + "|" + .@bs$ + "|" + PT_slot + "|" + .swapzeny + "|" + .sp + "|" + min(callsub(L_SkillCount), .sp) + "|" + PT_sps + "|" + $@PT_re + "|" + .@learned$;
 	.@len = getstrlen(.@out$);
 	.@parts = (.@len + 149) / 150;
 	for (.@p = 0; .@p < .@parts; .@p++)

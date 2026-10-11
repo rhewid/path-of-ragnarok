@@ -4,6 +4,7 @@
 // api.server.request('passive', ...) and draws the answer:
 //   status|message|start|points|mult|refund|ids|sockets|inventory cards|cards on|socket price|choices|job line|...
 //   |skill points setting|collected|spent|renewal server|learned skills (id:level,...)
+// A reply message ending in [confirm] asks the player to repeat the same action: the repeat is sent with a trailing 1.
 // The Skills tab spends the skill points (collected on the tree's outer ring): "slearn <skill id> <level>" learns a skill of any class.
 
 import { TREE } from './tree-data.js';
@@ -338,14 +339,24 @@ export default function init(parameters, api) {
 		msg.classList.toggle('err', !!isError);
 	}
 
-	async function ask(command) {
+	let pendingConfirm = '';
+	async function ask(requested) {
 		if (busy) return false;
+		// the server asked for a repeat of this exact action: send it with the confirm flag
+		const command = requested === pendingConfirm ? `${requested} 1` : requested;
+		pendingConfirm = '';
 		busy = true;
 		let good = false;
 		try {
 			const reply = parseReply(await api.server.request('passive', command, { timeout: 6000 }));
 			if (!reply) say('The server sent something unexpected.', true);
-			else { apply(reply, command === 'cards'); say(reply.message, !reply.ok); good = reply.ok; }
+			else {
+				apply(reply, command === 'cards');
+				const confirm = (reply.message || '').endsWith('[confirm]');
+				if (confirm) pendingConfirm = requested;
+				say((reply.message || '').replace(/ ?\[confirm\]$/, ''), !reply.ok);
+				good = reply.ok;
+			}
 		} catch (error) {
 			say(`The server did not answer (${error?.message || error}). Is the path-of-ragnarok mod switched on?`, true);
 		} finally {
@@ -718,7 +729,7 @@ export default function init(parameters, api) {
 		if (needsConfirm && armed !== act) { armed = act; renderBuild(); return; }
 		armed = '';
 		if (act === 'save') await ask(`bsave ${slot}${name ? ` ${name}` : ''}`);
-		else if (act === 'load') await ask(`bload ${slot}`);
+		else if (act === 'load') { await ask(`bload ${slot}`); if (pendingConfirm) armed = 'load'; }
 		else if (act === 'del') await ask(`bdel ${slot}`);
 		renderBuild();
 	});
@@ -777,7 +788,7 @@ export default function init(parameters, api) {
 		if (!etcPane.querySelector('.skills')) {
 			const groups = SKILL_GROUPS.map((g, i) => [i, g]).filter(([, g]) => state.renewal || !g.re);
 			etcPane.innerHTML = `<div class="etchead"></div>
-				<div class="etcnote">Learn any skill of any class: each level costs one point. Skill points are the cyan + nodes on the outer ring of the passive tree. Spent points lock that many nodes and the path to them (no refund, no reset), and what you learn is permanent. Skills you already have at that level cannot be bought again.</div>
+				<div class="etcnote">Learn any skill of any class: each level costs one point. Skill points are the cyan + nodes on the outer ring of the passive tree. Taking a skill point node back (or resetting the tree) after you spent its point resets your learned skills and gives the points back, so you learn them again. Skills you already have at that level cannot be bought again.</div>
 				<div class="etcbar"><select class="sgroup"><option value="-1">All classes</option>${groups.map(([i, g]) => `<option value="${i}">${escape(g.n)}</option>`).join('')}</select>
 					<input class="search ssearch" placeholder="Search skills..." autocomplete="off" spellcheck="false" value="${escape(etcFilter.text)}">
 					<label><input type="checkbox" class="sknown"${etcFilter.learned ? ' checked' : ''}> Learned only</label></div>
@@ -971,14 +982,14 @@ export default function init(parameters, api) {
 		if (Date.now() > resetArmed) {
 			resetArmed = Date.now() + 4000;
 			button.classList.add('warn');
-			button.textContent = `Really? (${(state.refund * state.alloc.size).toLocaleString()} zeny)`;
+			button.textContent = `Really? (${(state.refund * state.alloc.size).toLocaleString()} zeny${state.skillSpent > 0 ? ', resets learned skills' : ''})`;
 			setTimeout(() => { button.classList.remove('warn'); button.textContent = 'Reset all'; }, 4000);
 			return;
 		}
 		resetArmed = 0;
 		button.classList.remove('warn');
 		button.textContent = 'Reset all';
-		ask('reset');
+		ask(state.skillSpent > 0 ? 'reset 1' : 'reset');
 	});
 
 	const observer = new ResizeObserver(() => resize());
