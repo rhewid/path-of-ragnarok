@@ -942,7 +942,7 @@ for (let s = 0; s < 6; s++) {
 
 // ---- skill points: ten nodes on a ring outside everything else, linked to each other. Only four ways lead in, at north, east,
 // south and west: a short chain from the outermost node of the tree in that direction. Collecting a node gives one skill point
-// for the Skills tab of the window (the server keeps the best count ever reached, so a refund never takes a point away).
+// for the Skills tab of the window. Points spent lock that many nodes and their path (server: L_Locked).
 const SKILL_RING = [-90, -60, -30, 0, 45, 90, 120, 150, 180, 225];
 const SKILL_GATES = new Set([-90, 0, 90, 180]);
 {
@@ -953,7 +953,7 @@ const SKILL_GATES = new Set([-90, 0, 90, 180]);
 	const diff = (a, b) => Math.abs(((a - b + 540) % 360) - 180);
 	const ring = SKILL_RING.map((deg, i) => {
 		const [x, y] = pos(R, deg);
-		return add(`SP${i}`, 'skillpt', x, y, 'Skill Point', [], 'Collecting it gives 1 skill point (10 in total on this ring) to spend on the Skills tab. A point stays yours once collected, even if you refund the node.');
+		return add(`SP${i}`, 'skillpt', x, y, 'Skill Point', [], 'Allocating it gives 1 skill point (10 on this ring) to spend on the Skills tab. Once you spend points, that many of these nodes and the path to them stay allocated for good: they cannot be refunded or reset.');
 	});
 	ring.forEach((n, i) => extraLinks.push([n, ring[(i + 1) % ring.length], true]));
 	SKILL_RING.forEach((deg, i) => {

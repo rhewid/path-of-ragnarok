@@ -5,9 +5,10 @@
 ## New
 
 - **Skill Point ring**: ten cyan "+" nodes on a ring outside the rest of the tree, linked to each other. Only four ways lead in, at the north, east, south and west (a short chain from the outermost node of the tree in that direction). Each node costs a passive point to allocate and gives one skill point.
-- A skill point stays yours once collected, even if you refund the node, so the total never goes above 10 and learned skills are never at risk.
+- A node gives its point while it is allocated. Spending points **locks** that many skill nodes and the chain of nodes that connects them to your start: they cannot be refunded, reset or replaced by loading a build (Reset all and Load keep them and clear the rest), so the skills stay paid for with passive points.
 - **Skills tab** next to the Passive Tree tab: each point buys one level of any skill of any class. Class filter, search box, "Learned only" switch, **+1** and **Max** buttons. Learned skills are permanent and survive job changes. No refund.
 - New setting **Most skill points** (0-10, default 10; 0 switches spending off, skills already learned stay).
+- Refund, Reset all and Load build respect the lock; the server tells you when a node is locked.
 - New server command `slearn <skill id> <level>` (the window sends it).
 - New generated files: `npc/passive_tree_skills.txt` and `pre-renewal/npc/passive_tree_skills.txt` (the skills each era can learn) and `client/skill-data.js`.
 

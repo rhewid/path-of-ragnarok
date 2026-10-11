@@ -741,7 +741,7 @@ export default function init(parameters, api) {
 		if (!state.loaded) html = '<span class="none">Asking the server...</span>';
 		else if (!state.start) html = '<span>Choose a first class to wake the tree.</span>';
 		else if (off) html = '<span>Skill points are switched off on this server.</span>';
-		else html = `<span>Skill points: <b class="big">${skillsLeft()}</b> left <small>(${state.skillCollected} of ${state.skillSetting} collected, ${state.skillSpent} spent)</small></span>${state.skillCollected < state.skillSetting ? '<small>Collect more on the outer ring of the passive tree: the cyan + nodes, reached from the north, east, south or west.</small>' : ''}`;
+		else html = `<span>Skill points: <b class="big">${skillsLeft()}</b> left <small>(${state.skillCollected} of ${state.skillSetting} nodes taken, ${state.skillSpent} spent)</small></span>${state.skillCollected < state.skillSetting ? '<small>Take more cyan + nodes on the outer ring of the passive tree, reached from the north, east, south or west.</small>' : ''}`;
 		head.innerHTML = html;
 	}
 	function renderEtcList() {
@@ -777,7 +777,7 @@ export default function init(parameters, api) {
 		if (!etcPane.querySelector('.skills')) {
 			const groups = SKILL_GROUPS.map((g, i) => [i, g]).filter(([, g]) => state.renewal || !g.re);
 			etcPane.innerHTML = `<div class="etchead"></div>
-				<div class="etcnote">Learn any skill of any class: each level costs one point. Skill points are the cyan + nodes on the outer ring of the passive tree; a point stays yours once collected, and what you learn is permanent. Skills you already have at that level cannot be bought again.</div>
+				<div class="etcnote">Learn any skill of any class: each level costs one point. Skill points are the cyan + nodes on the outer ring of the passive tree. Spent points lock that many nodes and the path to them (no refund, no reset), and what you learn is permanent. Skills you already have at that level cannot be bought again.</div>
 				<div class="etcbar"><select class="sgroup"><option value="-1">All classes</option>${groups.map(([i, g]) => `<option value="${i}">${escape(g.n)}</option>`).join('')}</select>
 					<input class="search ssearch" placeholder="Search skills..." autocomplete="off" spellcheck="false" value="${escape(etcFilter.text)}">
 					<label><input type="checkbox" class="sknown"${etcFilter.learned ? ' checked' : ''}> Learned only</label></div>

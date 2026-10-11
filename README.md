@@ -208,7 +208,7 @@ Each start node grows a short stem with **two branches, one per second class** o
 Nodes no longer teach skills. Instead:
 
 - **Ten Skill Point nodes** (cyan, with a +) sit on a ring **outside the rest of the tree**, linked to each other. Only **four ways lead in**, at the **north, east, south and west**: a short chain from the outermost node of the tree in that direction. Allocating one costs a passive point like any node and gives **one skill point**.
-- A point stays yours once collected, even if you refund the node, so the total can never go above 10 and learned skills are never at risk.
+- A node gives its point while it is allocated. **Spending points locks that many skill nodes and the chain of nodes that connects them to your start**: they cannot be refunded, reset or swapped out by loading a build (Reset all and loading a build keep them and clear the rest). The passive points they cost stay spent for good, so the skills are paid for. Points you have not spent do not lock anything, and refunding such a node removes its point.
 - The window has a second tab, **Skills**, next to **Passive Tree**. A point buys **one level** of **any skill of any class** (Heal, Teleport, Hiding, Bash, Fire Bolt, Sonic Blow ... every class from Novice to the third classes on a renewal server). The list has a class filter, a search box and a "Learned only" switch. **+1** learns the next level, **Max** spends all remaining points on that skill.
 - What you learn is **permanent** and survives job changes (it is given with `skill <id>,<lv>,3`). There is no refund.
 - A skill you already know at that level cannot be bought again; levels you already have from your class are not charged.
@@ -265,6 +265,7 @@ Press **Apply** after changing settings; the server restarts. Reload the client 
 
 ## Changelog
 
+- **1.2.1** Fix: spent skill points now lock their skill point nodes and the path to them (no refund / reset / build swap to get the passive points back).
 - **1.2.0** Nodes no longer teach skills permanently (taken back from existing characters). New **Skills tab**: 10 skill points collected on four-entrance outer ring of the tree, learn any skill of any class. Setting "Nodes can teach skills" replaced by "Most skill points".
 - **1.1.0** Up to 5 saved builds per character with a swap price (new settings "Saved builds per character" and "Swapping to a saved build: price").
 - **1.0.4** Release made from the final `main` (the 1.0.3 tag pointed at an earlier commit); keystone table rows checked again. No functional change.
