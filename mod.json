@@ -1,8 +1,8 @@
 {
   "name": "path-of-ragnarok",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "author": "rhewid",
-  "description": "Path of Ragnarok (made mainly for pre-renewal): a Path-of-Exile style passive skill tree for every character: your first class picks the origin in the centre, each job level earns a point, and 713 connected nodes give stats, resistances, damage against races and elements, skill boosts (including weak or neglected skills), status effects, auto-casts and free skill recasts, drains, weapon masteries, EXP and drop bonuses, utility skills, 12 trade-off keystones, job-line and rebirth branches, teleport rifts and choose-one masteries. 6 sockets take cards. Saved builds. 10 skill points on the outer ring buy any skill of any class on the Skills tab. Search it, open it with Alt+P or @passive.",
+  "description": "Path of Ragnarok (made mainly for pre-renewal): a Path-of-Exile style passive skill tree for every character: your first class picks the origin in the centre, each job level earns a point, and 737 connected nodes give stats, resistances, damage against races and elements, skill boosts (including weak or neglected skills), status effects, auto-casts and free skill recasts, drains, weapon masteries, EXP and drop bonuses, utility skills, 12 trade-off keystones, job-line and rebirth branches, teleport rifts and choose-one masteries. 6 sockets take cards. Saved builds. Inner branches for Gunslinger, Ninja and Taekwon. 10 skill points on the outer ring buy any skill of any class (within your class tier) on the Skills tab; optionally the job skill points can too. Search it, open it with Alt+P or @passive.",
   "requires": {
     "app": ">=1.4.5",
     "era": "any"
@@ -11,11 +11,11 @@
     {
       "key": "max_points",
       "type": "number",
-      "default": 50,
+      "default": 150,
       "min": 1,
       "max": 250,
       "label": "Most passive points a character can have",
-      "description": "The cap on points. Points come from job level, so a class with 50 job levels fills a cap of 50."
+      "description": "The cap on points. Points come from job levels (see \"Every job earns points\"), so a character that goes through 1st, 2nd, transcended and 3rd class can use more than 50."
     },
     {
       "key": "points_per_level",
@@ -24,7 +24,14 @@
       "min": 0,
       "max": 10,
       "label": "Passive points per job level",
-      "description": "Job levels of a first class (Swordman, Mage, Archer, Acolyte, Merchant, Thief and the other first classes) each earn this many points, up to the cap. A second class or beyond starts at the cap. 0 = nobody earns points."
+      "description": "Job levels earn this many points each, up to the cap. With \"Every job earns points\" on this counts every job (1st, 2nd, transcended, 3rd...); off, only the levels of a first class count and a second class or beyond starts at the cap. 0 = nobody earns points."
+    },
+    {
+      "key": "points_all_jobs",
+      "type": "boolean",
+      "default": true,
+      "label": "Every job earns points",
+      "description": "On: every job level of every job earns passive points (job levels already credited are never counted twice, a rebirth starts a new count). Off: the old rule, only first-class levels count and a second class or beyond starts at the cap."
     },
     {
       "key": "refund_zeny",
@@ -59,6 +66,27 @@
       "max": 10,
       "label": "Most skill points",
       "description": "The outer ring of the tree holds 10 skill point nodes. Each collected node gives one point to spend (one point per level) on any skill of any class on the Skills tab. This caps the total a character can use. 0 = switched off: nobody can spend points, skills already learned stay."
+    },
+    {
+      "key": "skill_tier_lock",
+      "type": "boolean",
+      "default": true,
+      "label": "Skills limited to your class tier",
+      "description": "On: skill points (ring and job points) only learn skills of your own tier and below: Novice, first class, second class, transcended, third class, fourth class. A first class cannot take a fourth class skill. Skills already learned stay."
+    },
+    {
+      "key": "job_skill_custom",
+      "type": "boolean",
+      "default": false,
+      "label": "Job skill points can learn any skill",
+      "description": "On: the normal job skill points (the ones a job level gives) can be spent on the Skills tab on any skill of any class (within the tier limit), but the skill's own prerequisites must be met. Ring points ignore prerequisites. Using the skill reset NPC gives these points back and takes the skills back."
+    },
+    {
+      "key": "ring_again_after_rebirth",
+      "type": "boolean",
+      "default": true,
+      "label": "Skill point ring again after rebirth",
+      "description": "On: when a character is reborn the skills it learned with ring points are kept for good and the ring nodes are given back for free, so the ring can be taken a second time. Off: the ring is taken only once."
     },
     {
       "key": "show_button",

@@ -4,9 +4,9 @@ A mod for [Ragnarok Offline](https://github.com/Flux159/ragnarokoffline.app) tha
 
 - Your **first class decides where you start**: your origin sits in the **centre** of the tree and the tree grows **outward** from it. The starting node is free and gives **+2 to the class's stat**.
 - **Every job level earns a passive point**, up to **50** (both numbers are settings).
-- The tree is **one web of 713 nodes**, not a grid: nodes join along rings and spokes, so you grow outward from your start in a direction you pick, and the other classes' regions are reachable too.
+- The tree is **one web of 737 nodes**, not a grid: nodes join along rings and spokes, so you grow outward from your start in a direction you pick, and the other classes' regions are reachable too.
 - Nodes give **stats, flat and % bonuses, resistances to every element and race, damage against every element and race, skill boosts, EXP and drop rate**, plus **10 skill points** on the outer ring that are spent on a **Skills tab** to learn any skill of any class.
-- **168 notables** (bigger nodes with two or three effects), **12 keystones** (powerful, with a price), **12 masteries** (choose one of several effects), **6 card sockets**, **24 job-line branches** (second classes), **24 rebirth branches** (High classes) and **4 teleport rifts**.
+- **175 notables** (bigger nodes with two or three effects), **12 keystones** (powerful, with a price), **12 masteries** (choose one of several effects), **6 card sockets**, **24 job-line branches** (second classes), **24 rebirth branches** (High classes) and **4 teleport rifts**.
 - **Search box** at the top of the window: type a name, an effect or a skill (`double strafe`, `fire resist`, `identify`, `socket`, `keystone`...). Matches light up, the rest dims, Enter jumps to the next match.
 - **Up to 5 saved builds** per character: save your tree, try another, swap back.
 - Open it with **Alt+P**, the **PT** button under the minimap, or the **@passive** chat command.
@@ -33,9 +33,9 @@ The `tools` folder is only for editing the tree; the game ignores it.
 | Archer | centre, bottom | DEX |
 | Thief | centre, lower left | AGI |
 | Merchant | centre, upper left | LUK |
-| Wanderer (very centre) | Super Novice, Taekwon, Summoner, Gangsi | +1 to all stats |
+| Wanderer (very centre) | Super Novice, Taekwon, Gunslinger, Ninja, Summoner, Gangsi | +1 to all stats |
 
-Second, third and transcended classes keep the start of their first class (a Knight starts where a Swordsman does). Gunslingers start as Archers and Ninjas as Mages. A Novice has no tree until the first job.
+Second, third and transcended classes keep the start of their first class (a Knight starts where a Swordsman does). Gunslingers, Ninjas, Taekwons, Summoners, Gangsi and Super Novices start at the Wanderer centre (see below). A Novice has no tree until the first job.
 
 - **Allocate:** click a node. If it is not next to your tree, the whole shortest path to it is allocated (the window shows the cost first).
 - **Refund:** right-click an allocated node, or switch on **Refund mode** and click. A node can only be taken back if the rest of your tree stays connected to your start. Each refund costs zeny (setting).
@@ -73,7 +73,7 @@ Skill nodes use rAthena's per-skill bonuses: damage (`bSkillAtk`), healing (`bSk
 
 ### Layout: origin in the centre, keystones on the rim
 
-Each origin sits in the centre of the tree and the region opens outward from it: first the inner notables, then the rings and rim clusters. **There is no direct bridge between neighbouring regions any more.** To reach another class's bonuses you walk out to the keystone on the border (a trade-off node, so you pay for crossing) or around the far outer ring, and from there you branch into the next region. The six gateway nodes between the very centre and the origins are for the **Wanderer** start only: they are how a Wanderer reaches any class's origin, and class characters cannot use them as a shortcut (the window will not route a path through them).
+Each origin sits in the centre of the tree and the region opens outward from it: first the inner notables, then the rings and rim clusters. **There is no direct bridge between neighbouring regions any more.** The keystone on each border belongs to **one** region only (a dead end for the neighbour), so a class cannot walk into another class's nodes early (a Merchant used to reach Light Fingers after 15 steps; now it takes 27, on the far outer ring). To reach another class's bonuses you walk out to the far outer ring and cross there. The six gateway nodes between the very centre and the origins are for the **Wanderer** start only: they are how a Wanderer reaches any class's origin, and class characters cannot use them as a shortcut (the window will not route a path through them).
 
 Whenever the tree layout changes between versions, every character is **refunded once for free** on the first login after the update (cards go back to the inventory), with a chat message, so no allocation is left hanging.
 
@@ -81,7 +81,7 @@ Whenever the tree layout changes between versions, every character is **refunded
 
 A character can take only a few of them: **2 by default**, adjustable with the "Most keystones a character can take" setting (0 = no limit). The window shows "keystones 1 / 2" next to your points and refuses a path that would go over; the server enforces the same. Someone who already has more keeps them but cannot add another.
 
-Six sit **on the rim between two regions** and are the only way across from one class to the next (apart from the outer ring, below); six more sit on the outer ring. Each trades one thing for another:
+Six sit **on the rim between two regions**, each reached only from its own region (Iron Vow from the Swordsman side, Sanctified Mind from the Acolyte side, Overchannel Mage, Deadeye Archer, Phantom Gambit Thief, Golden Gamble Merchant); six more sit on the outer ring. Each trades one thing for another:
 
 | Keystone | Effect |
 |---|---|
@@ -100,7 +100,7 @@ Six sit **on the rim between two regions** and are the only way across from one 
 
 ### The outer ring
 
-A ring around the whole tree (radius 1020) that every rim cluster plugs into, so the tree can be walked all the way round. Per region it holds:
+A ring around the whole tree (radius 1020) that every rim cluster plugs into, so the tree can be walked all the way round. This ring is the only way across from one class to the next. Per region it holds:
 
 - **Small nodes** with status chances on hit (Stun, Blind, Bleeding, Poison, Freeze...), weapon-type damage (1H/2H sword, spear, axe, mace, knuckle, staff, book, bow, dagger, katar), regeneration (Max HP/SP every few seconds), melee/ranged/magic damage reduction, zeny per kill and more.
 - **Four notables**, some with **auto-cast** (a chance to cast Magnum Break, Holy Light, Thunder Storm or Blitz Beat when you attack), drains, status resistances and trap damage. Six need you to **know a skill** at a level before you can allocate them (the tooltip says which).
@@ -203,6 +203,20 @@ On the far outer side of every region, two more branches hang off the outer ring
 
 Each start node grows a short stem with **two branches, one per second class** of that first class: Knight / Crusader, Priest / Monk, Wizard / Sage, Hunter / Bard-Dancer, Assassin / Rogue, Blacksmith / Alchemist. A branch only allocates for characters of that line (third and transcended classes count as their second class). Each has two skill nodes, a notable and a capstone, built around that job's skills.
 
+### Gunslinger, Ninja and Taekwon branches
+
+The expanded classes have no origin of their own: they all start at the Wanderer centre and walk into the region that suits them through the gateways. Each gets a short **dead-end branch of four inner nodes** up the centre line of a region that suits it (between the origin and ring 2), linked to that region's origin only:
+
+| Branch | Region | Nodes |
+|---|---|---|
+| Gunslinger | Archer | Revolver Mastery (+4% revolver damage), Rifle Mastery (+4%), Desperado (+6% Desperado and Spread Attack), notable **Gunslinger's Poise** (+8% Triple Action and Chain Action, +6% Gatling Gun and Shotgun damage) |
+| Ninja | Mage | Crimson Fire Petal and Spear of Ice (+5%), Throw Shuriken and Throw Kunai (+5%), notable **Stone Echo** (4% chance to cast Kamaitachi, Lightning Strike of Destruction or Crimson Fire Formation again for free, +6% Wind Blade), notable **Ninpo Mastery** (3% free recast of Raging Fire Dragon and Ice Meteor, +8% Lightning Strike of Destruction and Raging Fire Dragon, +6% Huuma Shuriken damage) |
+| Taekwon | Thief | Tornado Kick and Roundhouse Kick (+5%), +4% bare-handed damage and +6 FLEE, Heel Drop and Flying Kick (+6%), notable **Kick Master** (+8% Counter Kick, Tornado Kick and Roundhouse Kick, +2% attack speed) |
+
+The bonuses name their own weapons and skills, so they do nothing for the other classes and are open to every start (they walk in through the Wanderer gateways: a Gunslinger to the Archer region, a Ninja to the Mage region, a Taekwon to the Thief region). Each class also has a **second branch of four nodes on the outer rim**, hung off the ring-4 node next to a border keystone, so the keystone is **not** on the way: the **Ninja** branch beyond **Overchannel** (Shadow Slash, Final Strike, Huuma Shuriken, Throw Zeny, Crimson Fire Formation, cheaper Raging Fire Dragon, notable **Shinobi Path**), the **Gunslinger** branch beyond **Deadeye** (Rapid Shower, Piercing Shot, Tracking, Bulls Eye, Full Buster, Dust, Grenade Launcher, notable **Dead Aim** with HIT and CRIT) and the **Taekwon** branch beyond **Phantom Gambit** (bare-handed damage, attack speed, movement, FLEE, Counter Kick, Heel Drop, notable **Hwarang** with CRIT, critical damage, attack speed and movement). They lie in the Mage, Archer and Thief region (the side of the keystone the class would come from).
+
+The skills themselves come from the skill points on the Skills tab. The Ninja's **free recasts** are the answer to their stone costs: the trait that frees gemstones does not cover Flame, Ice and Wind Stones, but when you cast a stone spell it can cast itself again for free (no stone, no SP, no cast time), with the same mechanism as the other free recasts (4% on the Stone Echo notable, 3% on Ninpo Mastery). Self-cast ninja spells have not been tried with it in game.
+
 ### Skill points (Skills tab)
 
 Nodes no longer teach skills. Instead:
@@ -215,16 +229,28 @@ Nodes no longer teach skills. Instead:
 - Skills the tree used to teach from nodes in older versions are **taken back** the first time a character logs in with this version. The nodes keep their stat bonuses.
 - The skill-level nodes (Blessing, Increase AGI and the other support clusters) only work for skills the character knows, so learn the skill on the Skills tab first.
 
+### Class tiers, job skill points, rebirth (1.3.0)
+
+- **Class tier lock** (setting, on): skill points learn only skills of **your tier and below**: Novice, first class, second class, transcended, third class, fourth class. A first class cannot take a fourth class skill; the Skills tab hides what you cannot take. Skills already learned stay.
+- **Job skill points** (setting "Job skill points can learn any skill", off by default): the normal skill points a job level gives can be spent on the Skills tab on any skill of any class, within your tier. A **Spend ring points / Spend job points** choice appears on the tab. **Job points obey the skill's prerequisites** (Bash Lv 5 before Magnum Break and so on, from rAthena's skill_tree.yml); the **ring points still ignore them**. A job point spent here is taken from your normal skill points.
+- **Skill reset NPC**: when the NPC resets your skills, the next time you open the window the skills learned with ring and job points are taken back too, the job points are given back, and the **passive tree stays**. It is checked only when the window is opened (it notes your skill points and job level each time and sees them jump). The server log says `skill reset detected`.
+- **Rebirth**: on the first login/window open as a reborn character, the skills you learned with ring points are **kept for good** (a reset never takes them), and the ring nodes are given back for free so you can take the ring a **second time**. Setting "Skill point ring again after rebirth" turns this off.
+- **Every job earns points** (setting, on): each job level of each job earns passive points (a rebirth is a new job and counts again). A character with points from the old rule keeps them and only earns new levels from now on. The default cap is now 150.
+
 ## Settings
 
 | Setting | Default |
 |---|---|
-| Most passive points a character can have | 50 |
+| Most passive points a character can have | 150 |
 | Passive points per job level | 1 |
+| Every job earns points (off = only first-class levels count) | on |
 | Refund price per node (zeny) | 10000 |
 | Allow refunds | on |
 | Bonus strength (%), scales every number on the tree including the keystone penalties (not the cards) | 100 |
 | Most skill points (0-10, 0 = switched off) | 10 |
+| Skills limited to your class tier | on |
+| Job skill points can learn any skill | off |
+| Skill point ring again after rebirth | on |
 | Show the PT button in game | on |
 | Most keystones a character can take (0 = no limit) | 2 |
 | Most extra item drop rate the tree can give (%) | 2 |
@@ -255,7 +281,7 @@ Press **Apply** after changing settings; the server restarts. Reload the client 
 - `bonus bAtk` and `bonus bMatk` (flat ATK and MATK nodes) are read from rAthena's item bonus list; whether they show in the status window the same way in both eras is unchecked.
 - Characters that were given passive bonuses and then reborn to a Novice keep the bonuses until they pick a first class again.
 - Lowering the "Most passive points" setting below what a character has already spent leaves the allocated nodes in place; it just stops new ones.
-- Class mapping for Taekwon, Summoner, Gangsi and Super Novice (centre start) and Gunslinger/Ninja is my choice, not something the game dictates. It is one `switch` in `L_Sync` of the template.
+- Class mapping for Gunslinger, Ninja, Taekwon, Summoner, Gangsi and Super Novice (centre start) is my choice, not something the game dictates. It is one `switch` in `L_Sync` of the template.
 - **Auto-cast nodes** use rAthena's `bAutoSpell` from inside the same bonus script. It is the same command cards use, but it has not been tried from a bonus script here; if a chance never fires, tell me.
 - Status-on-hit chances (`bAddEff`) only trigger on weapon attacks, not on spells.
 - The "Hard Cap" keystone (`bAbsorbDmgMaxHP2`) uses the official behaviour: a hit above the cap is cut down to it.
@@ -265,6 +291,7 @@ Press **Apply** after changing settings; the server restarts. Reload the client 
 
 ## Changelog
 
+- **1.3.0** Gunslinger, Ninja and Taekwon start at the Wanderer centre and get inner and outer branches (with free recasts of the Ninja stone spells); border keystones belong to one region so classes no longer reach each other's nodes early; class tier lock for skills; job skill points can learn any skill (off by default); skill reset NPC; ring skills kept after rebirth and the ring can be taken again; every job earns passive points (cap default 150); positive penalties show red; fix for the script not loading. Full list in [CHANGELOG.md](CHANGELOG.md).
 - **1.2.1** Fix: taking back skill point nodes below the points spent resets the learned skills (you learn them again), so refunding or resetting cannot keep skills for free. The window asks to confirm first.
 - **1.2.0** Nodes no longer teach skills permanently (taken back from existing characters). New **Skills tab**: 10 skill points collected on four-entrance outer ring of the tree, learn any skill of any class. Setting "Nodes can teach skills" replaced by "Most skill points".
 - **1.1.0** Up to 5 saved builds per character with a swap price (new settings "Saved builds per character" and "Swapping to a saved build: price").

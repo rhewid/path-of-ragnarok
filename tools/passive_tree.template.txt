@@ -23,9 +23,9 @@
 //=   - The client window (client/index.js) talks to this script through
 //=       @passive <n> state | cards | alloc <id,id,...> | refund <id> | reset
 //=               | socket <node> <card id> | unsocket <node> | choose <node> <option>
-//=               | slearn <skill id> <level>
+//=               | slearn <skill id> <level> | jlearn <skill id> <level>
 //=     and gets one line back:
-//=       status|message|start|points|mult|refund|ids|sockets|inventory cards|cards on|socket price|choices|job line|keystone limit|reborn|drop cap|builds|current slot|swap price|skill points setting|collected|spent|renewal|learned
+//=       status|message|start|points|mult|refund|ids|sockets|inventory cards|cards on|socket price|choices|job line|keystone limit|reborn|drop cap|builds|current slot|swap price|skill points setting|collected|spent|renewal|learned|job skill points|job custom|tier|tier lock|job learned|banked
 //=     (refund is -1 when refunds are switched off; sockets is node:card,...;
 //=     the inventory list, id:amount,..., only comes with the "cards" request).
 //=     Typing @passive on its own opens the window.
@@ -48,6 +48,10 @@ OnInit:
 	.refund = callfunc("F_ModSetting", "path-of-ragnarok", "refund_zeny", 10000);
 	.canrefund = callfunc("F_ModSetting", "path-of-ragnarok", "allow_refund", 1);
 	.sp = min(max(callfunc("F_ModSetting", "path-of-ragnarok", "skill_points", 10), 0), 10);
+	.allj = callfunc("F_ModSetting", "path-of-ragnarok", "points_all_jobs", 1);
+	.tierlock = callfunc("F_ModSetting", "path-of-ragnarok", "skill_tier_lock", 1);
+	.jobcustom = callfunc("F_ModSetting", "path-of-ragnarok", "job_skill_custom", 0);
+	.ringreb = callfunc("F_ModSetting", "path-of-ragnarok", "ring_again_after_rebirth", 1);
 	$@PT_mult = callfunc("F_ModSetting", "path-of-ragnarok", "value_mult", 100);
 	.cards = callfunc("F_ModSetting", "path-of-ragnarok", "allow_cards", 1);
 	.mvpcards = callfunc("F_ModSetting", "path-of-ragnarok", "mvp_cards", 0);
@@ -86,6 +90,7 @@ OnQuery:
 		end;
 	}
 	callsub L_Sync;
+	callsub L_ResetCheck;
 	debugmes "[path-of-ragnarok] " + strcharinfo(0) + ": " + .@atcmd_parameters$[1] + " " + .@atcmd_parameters$[2] + " (start " + PT_start + ", points " + min(PT_earned, .max) + ", used " + getarraysize(PT_nodes) + ")";
 	.@cmd$ = .@atcmd_parameters$[1];
 	.@arg$ = .@atcmd_parameters$[2];
@@ -177,6 +182,13 @@ OnQuery:
 			.@msg$ = .@r$;
 		}
 		callsub L_Apply;
+	} else if (.@cmd$ == "jlearn") {
+		.@r$ = callsub(L_JobLearn, atoi(.@arg$), atoi(.@atcmd_parameters$[3]));
+		if (.@r$ != "") {
+			.@status$ = "err";
+			.@msg$ = .@r$;
+		}
+		callsub L_Apply;
 	} else if (.@cmd$ == "choose") {
 		.@r$ = callsub(L_Choose, atoi(.@arg$), atoi(.@atcmd_parameters$[3]));
 		if (.@r$ != "") {
@@ -186,9 +198,13 @@ OnQuery:
 		callsub L_Apply;
 	}
 	if (@pt_sreset) {
-		.@msg$ += (.@msg$ != "" ? " " : "") + "Your learned skills were reset: learn them again on the Skills tab.";
+		if (@pt_sreset == 2)
+			.@msg$ += (.@msg$ != "" ? " " : "") + "The skill reset also took back the skills learned with skill points (the passive tree stays): learn them again on the Skills tab.";
+		else
+			.@msg$ += (.@msg$ != "" ? " " : "") + "Your learned skills were reset: learn them again on the Skills tab.";
 		@pt_sreset = 0;
 	}
+	callsub L_SkSnap;
 	if (.@status$ != "ok")
 		debugmes "[path-of-ragnarok] refused: " + .@msg$;
 	callsub L_Reply, .@atcmd_parameters$[0], .@status$, .@msg$, (.@cmd$ == "cards");
@@ -209,8 +225,8 @@ L_Sync:
 		case EAJ_ARCHER:	.@start = 4; break;
 		case EAJ_THIEF:	.@start = 5; break;
 		case EAJ_MERCHANT:	.@start = 6; break;
-		case EAJ_GUNSLINGER:	.@start = 4; break;
-		case EAJ_NINJA:	.@start = 3; break;
+		case EAJ_GUNSLINGER:
+		case EAJ_NINJA:
 		case EAJ_TAEKWON:
 		case EAJ_SUMMONER:
 		case EAJ_GANGSI:	.@start = 7; break;
@@ -223,16 +239,47 @@ L_Sync:
 		}
 	}
 	if (.@start) {
-		if (.@tier1)
-			.@e = JobLevel * .ppl;
-		else
-			.@e = .max;
-		.@e = min(.@e, .max);
-		if (.@e > PT_earned)
-			PT_earned = .@e;
+		if (.allj) {
+			// every job earns its own job levels: PT_jc[] holds the classes seen, PT_jm[] the highest job level credited for each.
+			// A character that earned points under the old rule is seeded with its current job level (nothing is credited twice).
+			.@cn = getarraysize(PT_jc);
+			.@at = -1;
+			for (.@i = 0; .@i < .@cn; .@i++) {
+				if (PT_jc[.@i] == Class)
+					.@at = .@i;
+			}
+			if (.@at < 0) {
+				.@at = .@cn;
+				PT_jc[.@at] = Class;
+				if (PT_earned > 0 && .@cn == 0)
+					PT_jm[.@at] = JobLevel;
+				else
+					PT_jm[.@at] = 0;
+			}
+			if (JobLevel > PT_jm[.@at]) {
+				PT_earned += (JobLevel - PT_jm[.@at]) * .ppl;
+				PT_jm[.@at] = JobLevel;
+			}
+			if (PT_earned > .max)
+				PT_earned = .max;
+		} else {
+			if (.@tier1)
+				.@e = JobLevel * .ppl;
+			else
+				.@e = .max;
+			.@e = min(.@e, .max);
+			if (.@e > PT_earned)
+				PT_earned = .@e;
+		}
 		if (PT_start != .@start) {
 			PT_start = .@start;
 			deletearray PT_nodes[0], getarraysize(PT_nodes);
+		}
+		// rebirth: what the ring taught stays for good; the ring can be taken again
+		if (!PT_reb && callsub(L_Upper)) {
+			PT_reb = 1;
+			if (.ringreb)
+				callsub L_RebirthBank;
 		}
 	}
 	// a socket that no longer exists (removed from the tree): give its card back
@@ -316,7 +363,144 @@ L_Skills:
 		if (getskilllv(PT_ls[.@i]) < PT_ll[.@i])
 			skill PT_ls[.@i], PT_ll[.@i], 3;
 	}
+	.@n = getarraysize(PT_js);
+	for (.@i = 0; .@i < .@n; .@i++) {
+		if (getskilllv(PT_js[.@i]) < PT_jv[.@i])
+			skill PT_js[.@i], PT_jv[.@i], 3;
+	}
+	.@n = getarraysize(PT_bs);
+	for (.@i = 0; .@i < .@n; .@i++) {
+		if (getskilllv(PT_bs[.@i]) < PT_bl[.@i])
+			skill PT_bs[.@i], PT_bl[.@i], 3;
+	}
 	return;
+
+// Rebirth with the ring taken: the skills learned with ring points are kept for good (PT_bs[] / PT_bl[], never taken back by a
+// reset), the ring nodes are given back for free so the ring can be taken a second time.
+L_RebirthBank:
+	.@n = getarraysize(PT_ls);
+	for (.@i = 0; .@i < .@n; .@i++) {
+		.@b = getarraysize(PT_bs);
+		for (.@k = 0; .@k < .@b; .@k++) {
+			if (PT_bs[.@k] == PT_ls[.@i])
+				break;
+		}
+		PT_bs[.@k] = PT_ls[.@i];
+		if (PT_bl[.@k] < PT_ll[.@i])
+			PT_bl[.@k] = PT_ll[.@i];
+	}
+	deletearray PT_ls[0], .@n;
+	deletearray PT_ll[0], getarraysize(PT_ll);
+	deletearray PT_lo[0], getarraysize(PT_lo);
+	PT_sps = 0;
+	.@c = 0;
+	for (.@i = getarraysize(PT_nodes) - 1; .@i >= 0; .@i--) {
+		if (.skp[PT_nodes[.@i]]) {
+			deletearray PT_nodes[.@i], 1;
+			.@c++;
+		}
+	}
+	if (.@n > 0 || .@c > 0) {
+		debugmes "[path-of-ragnarok] " + strcharinfo(0) + ": rebirth, banked " + .@n + " ring skills, gave back " + .@c + " ring nodes";
+		dispbottom "[Passive Tree] Rebirth: the skills you learned with ring skill points are yours for good, and the skill point ring can be taken again.";
+	}
+	return;
+
+// Run when the window asks something: did the skill reset NPC run since the last look? It gives back SkillPoint but leaves
+// skills granted with flag 3 alone, so the points here rose by more than the job levels gained. Then the skills learned with
+// skill points (ring and job points) are taken back, job points are given back; the passive nodes stay.
+L_ResetCheck:
+	.@now = SkillPoint;
+	if (PT_skcl && PT_skcl == Class && (PT_sps > 0 || getarraysize(PT_js) > 0)) {
+		.@gain = max(JobLevel - PT_skjl, 0);
+		if (.@now - PT_sksnap > .@gain) {
+			.@n = getarraysize(PT_ls);
+			for (.@i = 0; .@i < .@n; .@i++)
+				skill PT_ls[.@i], 0, 3;
+			deletearray PT_ls[0], .@n;
+			deletearray PT_ll[0], getarraysize(PT_ll);
+			deletearray PT_lo[0], getarraysize(PT_lo);
+			.@j = getarraysize(PT_js);
+			for (.@i = 0; .@i < .@j; .@i++)
+				skill PT_js[.@i], 0, 3;
+			deletearray PT_js[0], .@j;
+			deletearray PT_jv[0], getarraysize(PT_jv);
+			SkillPoint += PT_jps;
+			debugmes "[path-of-ragnarok] " + strcharinfo(0) + ": skill reset detected, took back " + .@n + " ring and " + .@j + " job skills (" + PT_sps + " ring points, " + PT_jps + " job points given back)";
+			PT_sps = 0;
+			PT_jps = 0;
+			@pt_sreset = 2;
+		}
+	}
+	callsub L_SkSnap;
+	return;
+
+L_SkSnap:
+	PT_sksnap = SkillPoint;
+	PT_skjl = JobLevel;
+	PT_skcl = Class;
+	return;
+
+// Tier of the character: 0 Novice, 1 first class, 2 second class, 3 transcended, 4 third class, 5 fourth class.
+L_Tier:
+	.@e = eaclass();
+	if (.@e < 0)
+		return 0;
+	if (.@e & EAJL_FOURTH)
+		return 5;
+	if (.@e & EAJL_THIRD)
+		return 4;
+	if (.@e & EAJL_2)
+		return ((.@e & EAJL_UPPER) ? 3 : 2);
+	if ((.@e & EAJ_BASEMASK) == EAJ_NOVICE)
+		return 0;
+	return 1;
+
+// Learns skill getarg(0) up to level getarg(1) with job skill points (SkillPoint): any tree, but the skill's own
+// prerequisites ($@PT_skq$) must be met. Returns "" or the reason it was refused.
+L_JobLearn:
+	.@id = getarg(0);
+	.@lv = getarg(1);
+	if (!.jobcustom)
+		return "Job skill points cannot be spent on other skill trees here.";
+	.@max = $@PT_skok[.@id];
+	if (.@max < 1)
+		return "That skill cannot be learned here.";
+	if (.@lv < 1 || .@lv > .@max)
+		return "That level does not exist.";
+	if (.tierlock && $@PT_skt[.@id] > callsub(L_Tier))
+		return "That skill belongs to a higher class tier than yours.";
+	.@have = getskilllv(.@id);
+	if (.@have >= .@lv)
+		return "You already know that skill at level " + .@have + ".";
+	.@cost = .@lv - .@have;
+	if (SkillPoint < .@cost)
+		return "That needs " + .@cost + " skill point" + (.@cost > 1 ? "s" : "") + " and you have " + SkillPoint + ".";
+	if ($@PT_skq$[.@id] != "") {
+		deletearray .@q$[0], getarraysize(.@q$);
+		explode(.@q$, $@PT_skq$[.@id], ",");
+		.@qc = getarraysize(.@q$);
+		for (.@i = 0; .@i < .@qc; .@i++) {
+			.@rid = atoi(.@q$[.@i]);
+			.@rlv = atoi(substr(.@q$[.@i], strpos(.@q$[.@i], ":") + 1, getstrlen(.@q$[.@i]) - 1));
+			if (getskilllv(.@rid) < .@rlv)
+				return "That needs " + ($@PT_skn$[.@rid] != "" ? $@PT_skn$[.@rid] : "skill " + .@rid) + " Lv " + .@rlv + " first.";
+		}
+	}
+	.@at = -1;
+	.@n = getarraysize(PT_js);
+	for (.@i = 0; .@i < .@n; .@i++) {
+		if (PT_js[.@i] == .@id)
+			.@at = .@i;
+	}
+	if (.@at < 0) {
+		.@at = .@n;
+		PT_js[.@at] = .@id;
+	}
+	PT_jv[.@at] = .@lv;
+	PT_jps += .@cost;
+	SkillPoint -= .@cost;
+	return "";
 
 // Number of skill point nodes allocated (the points held are min(this, .sp)).
 L_SkillCount:
@@ -355,6 +539,8 @@ L_SkillLearn:
 		return "That skill cannot be learned here.";
 	if (.@lv < 1 || .@lv > .@max)
 		return "That level does not exist.";
+	if (.tierlock && $@PT_skt[.@id] > callsub(L_Tier))
+		return "That skill belongs to a higher class tier than yours.";
 	.@have = getskilllv(.@id);
 	if (.@have >= .@lv)
 		return "You already know that skill at level " + .@have + ".";
@@ -827,11 +1013,19 @@ L_Reply:
 	.@ls = getarraysize(PT_ls);
 	for (.@i = 0; .@i < .@ls; .@i++)
 		.@learned$ += (.@i ? "," : "") + PT_ls[.@i] + ":" + PT_ll[.@i];
+	.@jl$ = "";
+	.@js = getarraysize(PT_js);
+	for (.@i = 0; .@i < .@js; .@i++)
+		.@jl$ += (.@i ? "," : "") + PT_js[.@i] + ":" + PT_jv[.@i];
+	.@bk$ = "";
+	.@bs = getarraysize(PT_bs);
+	for (.@i = 0; .@i < .@bs; .@i++)
+		.@bk$ += (.@i ? "," : "") + PT_bs[.@i] + ":" + PT_bl[.@i];
 	.@m = $@PT_mult;
 	if (.@m < 10)
 		.@m = 100;
 	.@r = .canrefund ? .refund : -1;
-	.@out$ = getarg(1) + "|" + getarg(2) + "|" + PT_start + "|" + min(PT_earned, .max) + "|" + .@m + "|" + .@r + "|" + .@ids$ + "|" + .@sock$ + "|" + .@inv$ + "|" + .cards + "|" + .sockzeny + "|" + .@choice$ + "|" + callsub(L_Line) + "|" + .maxkeys + "|" + callsub(L_Upper) + "|" + $@PT_dropcap + "|" + .@bs$ + "|" + PT_slot + "|" + .swapzeny + "|" + .sp + "|" + min(callsub(L_SkillCount), .sp) + "|" + PT_sps + "|" + $@PT_re + "|" + .@learned$;
+	.@out$ = getarg(1) + "|" + getarg(2) + "|" + PT_start + "|" + min(PT_earned, .max) + "|" + .@m + "|" + .@r + "|" + .@ids$ + "|" + .@sock$ + "|" + .@inv$ + "|" + .cards + "|" + .sockzeny + "|" + .@choice$ + "|" + callsub(L_Line) + "|" + .maxkeys + "|" + callsub(L_Upper) + "|" + $@PT_dropcap + "|" + .@bs$ + "|" + PT_slot + "|" + .swapzeny + "|" + .sp + "|" + min(callsub(L_SkillCount), .sp) + "|" + PT_sps + "|" + $@PT_re + "|" + .@learned$ + "|" + SkillPoint + "|" + .jobcustom + "|" + callsub(L_Tier) + "|" + .tierlock + "|" + .@jl$ + "|" + .@bk$;
 	.@len = getstrlen(.@out$);
 	.@parts = (.@len + 149) / 150;
 	for (.@p = 0; .@p < .@parts; .@p++)

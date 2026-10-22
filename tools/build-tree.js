@@ -81,6 +81,8 @@ const M = (name, text, fn, mul = 1) => (v, ...p) => ({
 	text: typeof text === 'function' ? text(...p) : text,
 	v, mul, c: S => fn(S, v, ...p),
 });
+// a penalty whose number is positive ("+25% cast time"): the window draws it red like a negative number
+const BAD = make => (...a) => ({ ...make(...a), bad: true });
 const FLAG = (name, text, code) => () => ({ name, text, v: 0, mul: 1, flag: true, c: () => code });
 
 const C = {
@@ -116,7 +118,7 @@ const C = {
 	double: M('Double Attack', '{s}{v}% double attack chance', (S, v) => `bonus bDoubleAddRate,${S(v)};`),
 	speed: M('Movement', '{s}{v}% movement speed', (S, v) => `bonus bSpeedAddRate,${S(v)};`),
 	cast: M('Cast Time', '-{v}% cast time', (S, v) => `bonus bCastrate,${S(-v)};`),
-	castup: M('Cast Time', '+{v}% cast time', (S, v) => `bonus bCastrate,${S(v)};`),
+	castup: BAD(M('Cast Time', '+{v}% cast time', (S, v) => `bonus bCastrate,${S(v)};`)),
 	delay: M('Skill Delay', '-{v}% after-cast delay', (S, v) => `bonus bDelayrate,${S(-v)};`),
 	spcost: M('SP Cost', '-{v}% skill SP cost', (S, v) => `bonus bUseSPrate,${S(-v)};`),
 	hpr: M('HP Recovery', '{s}{v}% natural HP recovery', (S, v) => `bonus bHPrecovRate,${S(v)};`),
@@ -138,7 +140,7 @@ const C = {
 	drop: M('Drop Rate', '{s}{v}% monster item drop rate (all drop bonuses on the tree share one cap)', (S, v) => `.@drop += ${S(v * 100)};`, 100),
 	// parametric: (v, constant, display name)
 	rele: M((e, n) => n + ' Ward', (e, n) => '{s}{v}% ' + n + ' resistance', (S, v, e) => `bonus2 bSubEle,${e},${S(v)};`),
-	takemorerace: M((e, n) => n + ' Wager', (e, n) => '+{v}% damage taken from ' + n, (S, v, e) => `bonus2 bSubRace,${e},${S(-v)};`),
+	takemorerace: BAD(M((e, n) => n + ' Wager', (e, n) => '+{v}% damage taken from ' + n, (S, v, e) => `bonus2 bSubRace,${e},${S(-v)};`)),
 	rrace: M((e, n) => n + ' Ward', (e, n) => '-{v}% damage from ' + n, (S, v, e) => `bonus2 bSubRace,${e},${S(v)};`),
 	reff: M((e, n) => n + ' Ward', (e, n) => '+{v}% ' + n + ' resistance', (S, v, e) => `bonus2 bResEff,${e},${S(v * 100)};`, 100),
 	vsrace: M((e, n) => n + ' Hunter', (e, n) => '+{v}% damage to ' + n, (S, v, e) => `bonus2 bAddRace,${e},${S(v)};`),
@@ -184,7 +186,7 @@ const C = {
 	critdefrate: M('Critical Guard', '-{v}% critical damage taken', (S, v) => `bonus bCritDefRate,${S(v)};`),
 	reflectmagic: M('Spell Mirror', '{v}% chance to reflect spells aimed at you', (S, v) => `bonus bMagicDamageReturn,${S(v)};`),
 	hitcap: M('Hard Cap', 'A single hit can take at most {v}% of your Max HP', (S, v) => `bonus bAbsorbDmgMaxHP2,${S(v)};`),
-	takemore: M('Glass', '+{v}% damage taken from everything', (S, v) => `bonus2 bSubRace,RC_All,${S(-v)};`),
+	takemore: BAD(M('Glass', '+{v}% damage taken from everything', (S, v) => `bonus2 bSubRace,RC_All,${S(-v)};`)),
 	zeny: M('Zeny on Kill', z => '{v}% chance of up to ' + z + ' zeny per kill', (S, v, z) => `bonus2 bGetZenyNum,${z},${S(v)};`),
 	// weapon types: (v, W_ constant, display name)
 	wdmg: M((e, n) => n + ' Mastery', (e, n) => '+{v}% damage with ' + n + ' (normal attacks)', (S, v, e) => `bonus2 bWeaponDamageRate,${e},${S(v)};`),
@@ -317,7 +319,7 @@ const RING = [
 const SPOKES = { 4: [[2, 1], [5, 4], [8, 7]], 3: [[1, 0], [4, 3], [7, 6]], 2: [[1, 0], [5, 4]] };
 const KEY_R = 125, GATE_R = 62;
 // bump when node ids or links change: characters are refunded once (free) so no allocation is left dangling
-const TREE_VERSION = 4;
+const TREE_VERSION = 5;
 
 // ---------------------------------------------------------------- satellite clusters --
 // Each sector grows four clusters on the outer rim, hung off ring-4 slots 1, 3, 7 and 9.
@@ -940,6 +942,77 @@ for (let s = 0; s < 6; s++) {
 	extraLinks.push([byKey.get(`V${s}.${RING5.n - 1}`), node, true], [node, byKey.get(`V${(s + 1) % 6}.0`), true], [node, byKey.get(`KK${s}`), false]);
 }
 
+// ---- the expanded classes: Gunslinger (counts as Archer), Ninja (counts as Mage) and Taekwon (the Wanderer start) get a short branch of
+// four inner nodes up the centre line of the region they fit, between the origin and ring 2 (the gap in ring 1 there). A dead end: it
+// links to the origin only. The bonuses name their own weapons and skills, so they do nothing for the other classes.
+const EXPANDED = [
+	{ s: 3, tag: 'Gunslinger', note: 'Gunslinger branch: revolvers, rifles, gatlings, shotguns and the Gunslinger skills.', fx: [
+		[['wdmg', 4, 'W_REVOLVER', 'Revolver']],
+		[['wdmg', 4, 'W_RIFLE', 'Rifle']],
+		[['skatk', 6, 'GS_DESPERADO', 'Desperado'], ['skatk', 6, 'GS_SPREADATTACK', 'Spread Attack']],
+		{ n: "Gunslinger's Poise", fx: [['skatk', 8, 'GS_TRIPLEACTION', 'Triple Action'], ['skatk', 8, 'GS_CHAINACTION', 'Chain Action'], ['wdmg', 6, 'W_GATLING', 'Gatling Gun'], ['wdmg', 6, 'W_SHOTGUN', 'Shotgun']] }] },
+	{ s: 2, tag: 'Ninja', note: 'Ninja branch: the Ninja spells, Shuriken, Kunai and Huuma Shuriken. The stone spells (Kamaitachi, Lightning Strike, Crimson Fire Formation, Raging Fire Dragon, Ice Meteor) can echo for free: no stone, no SP.', fx: [
+		[['skatk', 5, 'NJ_KOUENKA', 'Crimson Fire Petal'], ['skatk', 5, 'NJ_HYOUSENSOU', 'Spear of Ice']],
+		[['skatk', 5, 'NJ_SYURIKEN', 'Throw Shuriken'], ['skatk', 5, 'NJ_KUNAI', 'Throw Kunai']],
+		{ n: 'Stone Echo', fx: [['recast', 4, 'NJ_KAMAITACHI', 3, 'Kamaitachi'], ['recast', 4, 'NJ_RAIGEKISAI', 3, 'Lightning Strike of Destruction'], ['recast', 4, 'NJ_KAENSIN', 3, 'Crimson Fire Formation'], ['skatk', 6, 'NJ_HUUJIN', 'Wind Blade']] },
+		{ n: 'Ninpo Mastery', fx: [['recast', 3, 'NJ_BAKUENRYU', 3, 'Raging Fire Dragon'], ['recast', 3, 'NJ_HYOUSYOURAKU', 3, 'Ice Meteor'], ['skatk', 8, 'NJ_RAIGEKISAI', 'Lightning Strike of Destruction'], ['skatk', 8, 'NJ_BAKUENRYU', 'Raging Fire Dragon'], ['wdmg', 6, 'W_HUUMA', 'Huuma Shuriken']] }] },
+	{ s: 4, tag: 'Taekwon', note: 'Taekwon branch: the kick skills and bare-handed fighting.', fx: [
+		[['skatk', 5, 'TK_STORMKICK', 'Tornado Kick'], ['skatk', 5, 'TK_TURNKICK', 'Roundhouse Kick']],
+		[['wdmg', 4, 'W_FIST', 'Bare Hands'], ['flee', 6]],
+		[['skatk', 6, 'TK_DOWNKICK', 'Heel Drop'], ['skatk', 6, 'TK_JUMPKICK', 'Flying Kick']],
+		{ n: 'Kick Master', fx: [['skatk', 8, 'TK_COUNTER', 'Counter Kick'], ['skatk', 8, 'TK_STORMKICK', 'Tornado Kick'], ['skatk', 8, 'TK_TURNKICK', 'Roundhouse Kick'], ['aspd', 2]] }] },
+];
+for (const b of EXPANDED) {
+	const origin = byKey.get(`S${b.s}`);
+	const deg = secAngle(b.s);
+	let prev = origin;
+	b.fx.forEach((def, i) => {
+		const [x, y] = pos(162 + i * 41, deg);
+		const notable = !Array.isArray(def);
+		const node = add(`X${b.s}.${b.tag}.${i}`, notable ? 'notable' : 'small', x, y, notable ? def.n : null, effects(notable ? def.fx : def), b.note);
+		extraLinks.push([prev, node, false]);
+		prev = node;
+	});
+}
+
+// ---- more skills for the expanded classes on the outer rim, hung off the ring-4 node next to a border keystone (the keystone is
+// not on the way: Ninja beyond Overchannel, Gunslinger beyond Deadeye, Taekwon beyond Phantom Gambit). A chain of four nodes goes
+// straight out from the anchor; the angle is nudged until nothing else is closer than 36.
+const OUTER = [
+	{ anchor: 'R4.2.10', tag: 'Ninja', note: 'Ninja skills: Shadow Slash, Final Strike, the Shuriken and the fire spells.', fx: [
+		[['skatk', 6, 'NJ_KIRIKAGE', 'Shadow Slash'], ['skatk', 6, 'NJ_ISSEN', 'Final Strike']],
+		[['skatk', 6, 'NJ_HUUMA', 'Throw Huuma Shuriken'], ['skatk', 6, 'NJ_ZENYNAGE', 'Throw Zeny']],
+		[['skatk', 6, 'NJ_KAENSIN', 'Crimson Fire Formation'], ['sksp', 10, 'NJ_BAKUENRYU', 'Raging Fire Dragon']],
+		{ n: 'Shinobi Path', fx: [['skatk', 10, 'NJ_ISSEN', 'Final Strike'], ['skatk', 10, 'NJ_KIRIKAGE', 'Shadow Slash'], ['skatk', 8, 'NJ_HUUMA', 'Throw Huuma Shuriken'], ['flee', 8], ['cast', 3]] }] },
+	{ anchor: 'R4.3.10', tag: 'Gunslinger', note: 'Gunslinger skills: Rapid Shower, Piercing Shot, Tracking, Bulls Eye, Full Buster and Dust.', fx: [
+		[['skatk', 6, 'GS_RAPIDSHOWER', 'Rapid Shower'], ['skatk', 6, 'GS_PIERCINGSHOT', 'Piercing Shot']],
+		[['skatk', 6, 'GS_TRACKING', 'Tracking'], ['skatk', 6, 'GS_BULLSEYE', 'Bulls Eye']],
+		[['skatk', 6, 'GS_FULLBUSTER', 'Full Buster'], ['skatk', 6, 'GS_DUST', 'Dust'], ['wdmg', 4, 'W_GRENADE', 'Grenade Launcher']],
+		{ n: 'Dead Aim', fx: [['skatk', 10, 'GS_TRACKING', 'Tracking'], ['skatk', 10, 'GS_FULLBUSTER', 'Full Buster'], ['skatk', 10, 'GS_RAPIDSHOWER', 'Rapid Shower'], ['hit', 10], ['crit', 3]] }] },
+	{ anchor: 'R4.4.10', tag: 'Taekwon', note: 'Taekwon skills: kicks, bare-handed damage, speed and criticals.', fx: [
+		[['wdmg', 5, 'W_FIST', 'Bare Hands'], ['aspd', 1]],
+		[['speed', 4], ['flee', 6]],
+		[['skatk', 6, 'TK_COUNTER', 'Counter Kick'], ['skatk', 6, 'TK_DOWNKICK', 'Heel Drop']],
+		{ n: 'Hwarang', fx: [['wdmg', 8, 'W_FIST', 'Bare Hands'], ['crit', 4], ['critdmg', 8], ['aspd', 2], ['speed', 6]] }] },
+];
+for (const b of OUTER) {
+	const anchor = byKey.get(b.anchor);
+	const a0 = Math.atan2(anchor.y, anchor.x) * 180 / Math.PI;
+	let pts = null;
+	for (const nudge of [0, 3, -3, 6, -6, 9, -9, 12, -12]) {
+		const cand = b.fx.map((_, i) => pos(655 + i * 52, a0 + nudge));
+		if (cand.every(([x, y]) => nodes.every(n => Math.hypot(n.x - x, n.y - y) >= 36))) { pts = cand; break; }
+	}
+	if (!pts) throw new Error('no room for the ' + b.tag + ' outer branch');
+	let prev = anchor;
+	b.fx.forEach((def, i) => {
+		const notable = !Array.isArray(def);
+		const node = add(`XO${b.tag}.${i}`, notable ? 'notable' : 'small', pts[i][0], pts[i][1], notable ? def.n : null, effects(notable ? def.fx : def), b.note);
+		extraLinks.push([prev, node, false]);
+		prev = node;
+	});
+}
+
 // ---- skill points: ten nodes on a ring outside everything else, linked to each other. Only four ways lead in, at north, east,
 // south and west: a short chain from the outermost node of the tree in that direction. Collecting a node gives one skill point
 // for the Skills tab of the window. Taking a node back below the points spent resets the learned skills (server: L_SkillReset).
@@ -990,7 +1063,8 @@ for (let s = 0; s < 6; s++) {
 	}
 	// the regions only meet at the keystones on the rim (no direct bridge between neighbouring rings any more)
 	link(id(`R4.${s}.${RING[4].n - 1}`), id(`K${s}`), true);
-	link(id(`K${s}`), id(`R4.${(s + 1) % 6}.0`), true);
+	// the keystone belongs to its own region only: the old link into the next region's outer ring let every class walk into a
+	// neighbour's nodes after ~15 steps (a Merchant reached Light Fingers). The regions now meet only far out (ring 5, skill ring).
 	// the origin opens the region at its inner notables; the gateway to the centre is for the Wanderer start only
 	link(id(`S${s}`), id(`R1.${s}.1`));
 	link(id(`S${s}`), id(`R1.${s}.3`));
@@ -1011,6 +1085,18 @@ for (const start of [1, 2, 3, 4, 5, 6, 7]) {
 	while (q.length) { const c = q.shift(); for (const n of adj[c - 1]) if (!dist.has(n)) { dist.set(n, dist.get(c) + 1); q.push(n); } }
 	if (dist.size !== nodes.length) throw new Error(`start ${start} reaches only ${dist.size}/${nodes.length}`);
 	if (start === 1) console.log('swordsman start: nearest keystone', Math.min(...nodes.filter(n => n.type === 'key').map(n => dist.get(n.id))), 'steps, farthest node', Math.max(...dist.values()));
+}
+// the six class starts never use the Wanderer gateways: they must still reach every other node, and the regions must not touch early
+for (const start of [1, 2, 3, 4, 5, 6]) {
+	const dist = new Map([[start, 0]]);
+	const q = [start];
+	while (q.length) { const c = q.shift(); for (const n of adj[c - 1]) if (!dist.has(n) && !nodes[n - 1].wand) { dist.set(n, dist.get(c) + 1); q.push(n); } }
+	const open = nodes.filter(n => !n.wand && n.key !== 'HUB');
+	if (open.some(n => !dist.has(n.id))) throw new Error(`start ${start} cannot reach ${open.find(n => !dist.has(n.id)).key} without the Wanderer gateways`);
+	// a node of another region (key R<ring>.<region>.<slot>) is never closer than this many steps
+	const foreign = nodes.filter(n => /^R[1-4][.][0-5][.]/.test(n.key) && n.key[3] !== String(start - 1));
+	const near = Math.min(...foreign.map(n => dist.get(n.id)));
+	if (near < 24) throw new Error(`start ${start} reaches another class's inner rings after ${near} steps`);
 }
 const bad = nodes.filter(n => !n.fx.length && n.type !== 'socket' && n.type !== 'mastery' && n.type !== 'skillpt');
 if (bad.length) throw new Error('node without effect ' + bad[0].key);
@@ -1089,13 +1175,13 @@ function writeClient() {
 		nodes: nodes.map(n => ({
 			id: n.id, t: { start: 'o', small: 's', notable: 'n', key: 'k', socket: 'j', mastery: 'm', portal: 'p', skillpt: 'q' }[n.type], x: n.x, y: n.y,
 			n: n.name || n.fx[0].name,
-			fx: n.fx.map(f => ({ t: f.text, v: f.v, m: f.mul })),
+			fx: n.fx.map(f => ({ t: f.text, v: f.v, m: f.mul, ...(f.bad ? { b: 1 } : {}) })),
 			...(n.info ? { info: n.info } : {}),
 			...(n.wand ? { w: 1 } : {}),
 			...(n.partner ? { pt: n.partner.id } : {}),
 			...(n.req ? { req: n.req.name, ...(n.req.up ? { up: 1, ul: n.req.label } : {}) } : {}),
 			...(n.rs ? { rs: `${n.rs.name} Lv ${n.rs.lv}` } : {}),
-			...(n.opts ? { opts: n.opts.map(o => ({ n: o.n, fx: o.fx.map(f => ({ t: f.text, v: f.v, m: f.mul })) })) } : {}),
+			...(n.opts ? { opts: n.opts.map(o => ({ n: o.n, fx: o.fx.map(f => ({ t: f.text, v: f.v, m: f.mul, ...(f.bad ? { b: 1 } : {}) })) })) } : {}),
 		})),
 		edges: edges.map(e => (e.portal ? [e.a, e.b, 2] : e.arc ? [e.a, e.b, 1] : [e.a, e.b])),
 	};
@@ -1167,21 +1253,24 @@ async function writeCards() {
 // (rAthena AegisName, "AL_HEAL" -> AL) that belong to each class; 'only: re' groups only exist on a renewal server.
 // Written as client/skill-data.js (union of both eras, the window picks by the era the server reports) and
 // as npc/passive_tree_skills.txt, once per era (the server only accepts what its own skill_db has).
+// [name, prefixes, 're' for renewal-only groups, tier]. Tier: 0 Novice, 1 first class, 2 second class, 3 transcended, 4 third class,
+// 5 fourth class. The server compares it with the tier of the character (L_Tier) when the tier lock is on.
 const SKILL_GROUPS = [
-	['Novice', ['NV']],
-	['Swordman', ['SM']], ['Mage', ['MG']], ['Archer', ['AC']], ['Acolyte', ['AL']], ['Merchant', ['MC']], ['Thief', ['TF']],
-	['Knight', ['KN']], ['Crusader', ['CR']], ['Priest', ['PR']], ['Monk', ['MO']], ['Wizard', ['WZ']], ['Sage', ['SA']],
-	['Hunter', ['HT']], ['Bard / Dancer', ['BA', 'DC', 'BD']], ['Assassin', ['AS']], ['Rogue', ['RG']], ['Blacksmith', ['BS']], ['Alchemist', ['AM']],
-	['Lord Knight', ['LK']], ['Paladin', ['PA']], ['High Priest', ['HP']], ['Champion', ['CH']], ['High Wizard', ['HW']], ['Professor', ['PF']],
-	['Sniper', ['SN']], ['Clown / Gypsy', ['CG']], ['Assassin Cross', ['ASC']], ['Stalker', ['ST']], ['Whitesmith', ['WS']],
-	['Taekwon', ['TK']], ['Star Gladiator', ['SG']], ['Soul Linker', ['SL']], ['Gunslinger', ['GS']], ['Ninja', ['NJ']],
-	['Rune Knight', ['RK'], 're'], ['Warlock', ['WL'], 're'], ['Guillotine Cross', ['GC'], 're'], ['Arch Bishop', ['AB'], 're'], ['Ranger', ['RA'], 're'],
-	['Mechanic', ['NC'], 're'], ['Shadow Chaser', ['SC'], 're'], ['Royal Guard', ['LG'], 're'], ['Sura', ['SR'], 're'],
-	['Minstrel / Wanderer', ['MI', 'WA', 'WM'], 're'], ['Sorcerer', ['SO'], 're'], ['Genetic', ['GN'], 're'], ['Rebellion', ['RL'], 're'],
-	['Star Emperor', ['SJ'], 're'], ['Soul Reaper', ['SP'], 're'], ['Kagerou / Oboro', ['KO', 'KG', 'OB'], 're'], ['Summoner', ['SU'], 're'],
-	['4th class', ['DK', 'AG', 'IQ', 'IG', 'CD', 'SHC', 'MT', 'BO', 'ABC', 'WH', 'TR', 'EM', 'SH', 'NW', 'SOA', 'HN', 'SKE', 'SS'], 're'],
+	['Novice', ['NV'], '', 0],
+	['Swordman', ['SM'], '', 1], ['Mage', ['MG'], '', 1], ['Archer', ['AC'], '', 1], ['Acolyte', ['AL'], '', 1], ['Merchant', ['MC'], '', 1], ['Thief', ['TF'], '', 1],
+	['Knight', ['KN'], '', 2], ['Crusader', ['CR'], '', 2], ['Priest', ['PR'], '', 2], ['Monk', ['MO'], '', 2], ['Wizard', ['WZ'], '', 2], ['Sage', ['SA'], '', 2],
+	['Hunter', ['HT'], '', 2], ['Bard / Dancer', ['BA', 'DC', 'BD'], '', 2], ['Assassin', ['AS'], '', 2], ['Rogue', ['RG'], '', 2], ['Blacksmith', ['BS'], '', 2], ['Alchemist', ['AM'], '', 2],
+	['Lord Knight', ['LK'], '', 3], ['Paladin', ['PA'], '', 3], ['High Priest', ['HP'], '', 3], ['Champion', ['CH'], '', 3], ['High Wizard', ['HW'], '', 3], ['Professor', ['PF'], '', 3],
+	['Sniper', ['SN'], '', 3], ['Clown / Gypsy', ['CG'], '', 3], ['Assassin Cross', ['ASC'], '', 3], ['Stalker', ['ST'], '', 3], ['Whitesmith', ['WS'], '', 3],
+	['Taekwon', ['TK'], '', 1], ['Star Gladiator', ['SG'], '', 2], ['Soul Linker', ['SL'], '', 2], ['Gunslinger', ['GS'], '', 1], ['Ninja', ['NJ'], '', 1],
+	['Rune Knight', ['RK'], 're', 4], ['Warlock', ['WL'], 're', 4], ['Guillotine Cross', ['GC'], 're', 4], ['Arch Bishop', ['AB'], 're', 4], ['Ranger', ['RA'], 're', 4],
+	['Mechanic', ['NC'], 're', 4], ['Shadow Chaser', ['SC'], 're', 4], ['Royal Guard', ['LG'], 're', 4], ['Sura', ['SR'], 're', 4],
+	['Minstrel / Wanderer', ['MI', 'WA', 'WM'], 're', 4], ['Sorcerer', ['SO'], 're', 4], ['Genetic', ['GN'], 're', 4], ['Rebellion', ['RL'], 're', 2],
+	['Star Emperor', ['SJ'], 're', 4], ['Soul Reaper', ['SP'], 're', 4], ['Kagerou / Oboro', ['KO', 'KG', 'OB'], 're', 2], ['Summoner', ['SU'], 're', 1],
+	['Spirit Handler', ['SH'], 're', 2], ['Night Watch / Shinkiro / Shiranui', ['NW', 'SS'], 're', 4],
+	['4th class', ['DK', 'AG', 'IQ', 'IG', 'CD', 'SHC', 'MT', 'BO', 'ABC', 'WH', 'TR', 'EM', 'SOA', 'HN', 'SKE'], 're', 5],
 ];
-const SKILL_SKIP = new Set(['NV_BASIC']);
+const SKILL_SKIP = new Set(['NV_BASIC', 'WL_READING_SB_READING']);
 function parseSkills(yml) {
 	const out = new Map();
 	for (const block of yml.split(/^  - Id: /m).slice(1)) {
@@ -1189,7 +1278,8 @@ function parseSkills(yml) {
 		const name = /^    Name: (\w+)/m.exec(block)?.[1];
 		const desc = /^    Description: (.*)$/m.exec(block)?.[1]?.trim();
 		const max = Number(/^    MaxLevel: (\d+)/m.exec(block)?.[1] || 0);
-		if (!name || !desc || !max || SKILL_SKIP.has(name)) continue;
+		// NPC-only skills (Suicide, Coma, Class Change, Leveling ...) and rAthena's hidden helper skills cannot be used by a player
+		if (!name || !desc || !max || SKILL_SKIP.has(name) || block.includes('\n      IsNpc: true')) continue;
 		const prefix = name.split('_')[0];
 		const gi = SKILL_GROUPS.findIndex(g => g[1].includes(prefix));
 		if (gi >= 0) out.set(id, { id, name, desc: desc.replace(/^"|"$/g, ''), max, group: gi });
@@ -1210,17 +1300,50 @@ async function writeSkills() {
 		if (!preOk && !reOk) continue;
 		rows.push([id, e.desc, preOk ? pre.max : 0, reOk ? re.max : 0, e.group]);
 	}
-	const groups = SKILL_GROUPS.map(g => ({ n: g[0], re: g[2] === 're' ? 1 : 0 }));
+	const groups = SKILL_GROUPS.map(g => ({ n: g[0], re: g[2] === 're' ? 1 : 0, t: g[3] }));
 	fs.writeFileSync(path.join(root, 'client', 'skill-data.js'), `// Generated by tools/build-tree.js. Do not edit by hand.
 // SKILLS rows: [id, name, max level pre-renewal (0 = none), max level renewal (0 = none), group]
 export const SKILL_GROUPS = ${JSON.stringify(groups)};
 export const SKILLS = ${JSON.stringify(rows)};
 `);
+	// prerequisites (rAthena skill_tree.yml): the first job in the file that lists a skill with Requires decides
+	const req = {};
+	for (const era of ['pre-re', 're']) {
+		const names = new Map();
+		for (const [id, sk] of eras[era]) names.set(sk.name, id);
+		const yml = await fetchCached(`skill_tree_${era}.yml`, `${RA}${era}/skill_tree.yml`);
+		const found = new Map();
+		let name = null, list = null;
+		for (const line of yml.split(/\r?\n/)) {
+			let m;
+			if ((m = /^      - Name: (\w+)/.exec(line))) { name = m[1]; list = null; }
+			else if (/^        Requires:/.test(line)) list = [];
+			else if (list && (m = /^          - Name: (\w+)/.exec(line))) list.push([m[1], 0]);
+			else if (list && list.length && (m = /^            Level: (\d+)/.exec(line))) {
+				list[list.length - 1][1] = Number(m[1]);
+				const id = names.get(name);
+				if (id && !found.has(id)) found.set(id, list);
+			}
+		}
+		req[era] = {};
+		for (const [id, l] of found) {
+			const ok = l.filter(([n, lv]) => lv > 0 && names.has(n)).map(([n, lv]) => [names.get(n), lv]);
+			if (ok.length && eras[era].has(id)) req[era][id] = ok;
+		}
+	}
+	fs.appendFileSync(path.join(root, 'client', 'skill-data.js'), `export const SKILL_REQ = ${JSON.stringify({ pre: req['pre-re'], re: req.re })};\n`);
 	const tpl = fs.readFileSync(path.join(__dirname, 'passive_tree_skills.template.txt'), 'utf8');
 	for (const [dir, era] of [['', 're'], ['pre-renewal', 'pre-re']]) {
 		const list = rows.filter(r => r[era === 're' ? 3 : 2] > 0);
-		const ok = list.map(r => `\t$@PT_skok[${r[0]}] = ${r[era === 're' ? 3 : 2]};`).join('\n');
-		const out = tpl.replace('//@@ERA@@', () => `\t$@PT_re = ${era === 're' ? 1 : 0};`).replace('//@@OK@@', () => ok);
+		const rq = req[era];
+		const ok = list.map(r => `\t$@PT_skok[${r[0]}] = ${r[era === 're' ? 3 : 2]};\n\t$@PT_skt[${r[0]}] = ${SKILL_GROUPS[r[4]][3]};`
+			+ (rq[r[0]] ? `\n\t$@PT_skq$[${r[0]}] = "${rq[r[0]].map(([i, l]) => `${i}:${l}`).join(',')}";` : '')).join('\n');
+
+		// names of the skills that are prerequisites of another one (the server has no skill name command)
+		const nameOf = new Map(rows.map(r => [r[0], r[1]]));
+		const needed = [...new Set(Object.values(rq).flat().map(([i]) => i))].sort((x, y) => x - y);
+		const names = needed.filter(i => nameOf.has(i)).map(i => `\t$@PT_skn$[${i}] = "${nameOf.get(i).replace(/"/g, "'")}";`).join('\n');
+		const out = tpl.replace('//@@ERA@@', () => `\t$@PT_re = ${era === 're' ? 1 : 0};`).replace('//@@OK@@', () => ok + (names ? '\n' + names : ''));
 		const target = path.join(root, dir, 'npc', 'passive_tree_skills.txt');
 		fs.mkdirSync(path.dirname(target), { recursive: true });
 		fs.writeFileSync(target, out);

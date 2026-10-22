@@ -3,12 +3,14 @@
 // What the character has allocated lives on the server; this window asks npc/passive_tree.txt through
 // api.server.request('passive', ...) and draws the answer:
 //   status|message|start|points|mult|refund|ids|sockets|inventory cards|cards on|socket price|choices|job line|...
-//   |skill points setting|collected|spent|renewal server|learned skills (id:level,...)
+//   |skill points setting|collected|spent|renewal server|learned skills (id:level,...)|job skill points|job custom|tier|tier lock
+//   |skills learned with job points (id:level,...)|skills banked at rebirth (id:level,...)
 // A reply message ending in [confirm] asks the player to repeat the same action: the repeat is sent with a trailing 1.
 // The Skills tab spends the skill points (collected on the tree's outer ring): "slearn <skill id> <level>" learns a skill of any class.
+// With the setting on it also spends the job skill points the same way ("jlearn"), but then the skill's prerequisites count.
 
 import { TREE } from './tree-data.js';
-import { SKILLS, SKILL_GROUPS } from './skill-data.js';
+import { SKILLS, SKILL_GROUPS, SKILL_REQ } from './skill-data.js';
 
 const NODES = new Map(TREE.nodes.map(n => [n.id, n]));
 const ADJ = new Map(TREE.nodes.map(n => [n.id, []]));
@@ -143,6 +145,7 @@ export function parseReply(text) {
 		builds: (f[16] || '').split(',').filter(Boolean).map(e => { if (e === '-') return null; const [name, count, ok] = e.split(':'); return { name, count: Number(count) || 0, ok: ok === '1' }; }),
 		slot: Number(f[17]) || 0, swapZeny: Number(f[18]) || 0,
 		skillSetting: Number(f[19]) || 0, skillCollected: Number(f[20]) || 0, skillSpent: Number(f[21]) || 0, renewal: f[22] === '1', learned: pairs(f[23]),
+		jobPoints: Number(f[24]) || 0, jobCustom: f[25] === '1', tier: Number(f[26]) || 0, tierLock: f[27] === '1', jobLearned: pairs(f[28]), banked: pairs(f[29]),
 	};
 }
 
@@ -152,6 +155,8 @@ export function effectText(fx, mult) {
 	const shown = fx.v === 0 ? 0 : magnitude / fx.m;
 	return fx.t.replace('{s}', fx.v < 0 ? '-' : '+').replace('{v}', fmt(shown));
 }
+/** A penalty: a negative number, or a positive one that hurts (more cast time, more damage taken). */
+const isBad = fx => fx.v < 0 || !!fx.b;
 const fmt = n => String(+Math.abs(n).toFixed(2));
 
 /** Everything a search can match on one node, lower case. */
@@ -214,7 +219,8 @@ export default function init(parameters, api) {
 
 	// ---- state ----
 	const state = { start: 0, cap: 0, mult: 100, refund: -1, alloc: new Set(), sockets: new Map(), choices: new Map(), line: 0, upper: false, dropCap: 0, builds: [], slot: 0, swapZeny: 0, keyLimit: 0, inv: [], cardsOn: false, socketZeny: 0, loaded: false,
-			skillSetting: 0, skillCollected: 0, skillSpent: 0, renewal: false, learned: [] };
+			skillSetting: 0, skillCollected: 0, skillSpent: 0, renewal: false, learned: [],
+			jobPoints: 0, jobCustom: false, tier: 0, tierLock: false, jobLearned: [], banked: [] };
 	const lineName = () => TREE.lines[state.line] || '';
 	const view = { x: 0, y: 0, zoom: 0.4, w: 300, h: 300, dpr: 1 };
 	let hover = 0, path = [], refundMode = false, busy = false, dragging = null, resetArmed = 0;
@@ -268,7 +274,7 @@ export default function init(parameters, api) {
 		if (!state.start) { side.innerHTML = '<h5>Active effects</h5><div class="none">Choose a first class to wake the tree.</div>'; return; }
 		const totals = new Map(), cards = [], picks = [];
 		const add = fx => {
-			const entry = totals.get(fx.t) || { t: fx.t, v: 0, flag: fx.v === 0 };
+			const entry = totals.get(fx.t) || { t: fx.t, v: 0, flag: fx.v === 0, b: !!fx.b };
 			entry.v += fxValue(fx);
 			totals.set(fx.t, entry);
 		};
@@ -287,7 +293,7 @@ export default function init(parameters, api) {
 				const applied = Math.floor(Math.min(e.v, state.dropCap) + 1e-9);
 				text += ` - applied: ${applied}% (whole percents only, capped at ${state.dropCap}%)`;
 			}
-			return { text, bad: !e.flag && e.v < 0, key: text.replace(/^[+-]/, '').toLowerCase() };
+			return { text, bad: !e.flag && (e.v < 0 || e.b), key: text.replace(/^[+-]/, '').toLowerCase() };
 		}).sort((a, b) => (a.key < b.key ? -1 : 1));
 		const part = (title, rows) => (rows.length ? `<h5>${title}</h5>${rows.join('')}` : '');
 		side.innerHTML = `<h5>Active effects <small>${lines.length} lines from ${state.alloc.size + 1} nodes</small></h5>${lines.length ? lines.map(l => `<div class="l${l.bad ? ' bad' : ''}">${escape(l.text)}</div>`).join('') : '<div class="none">Nothing yet.</div>'}`
@@ -320,6 +326,12 @@ export default function init(parameters, api) {
 		state.skillSpent = reply.skillSpent;
 		state.renewal = reply.renewal;
 		state.learned = reply.learned;
+		state.jobPoints = reply.jobPoints;
+		state.jobCustom = reply.jobCustom;
+		state.tier = reply.tier;
+		state.tierLock = reply.tierLock;
+		state.jobLearned = reply.jobLearned;
+		state.banked = reply.banked;
 		if (withInventory) state.inv = reply.inv;
 		state.loaded = true;
 		$('.pts').textContent = state.start ? `${unspent()} unspent  (${state.alloc.size} / ${state.cap} used)${state.keyLimit ? `  -  keystones ${keystonesUsed()} / ${state.keyLimit}` : ''}` : '-';
@@ -650,7 +662,7 @@ export default function init(parameters, api) {
 		const chosen = state.choices.get(node.id);
 		picker.innerHTML = `<header><span>${escape(node.n)}</span><button data-act="close">Close</button></header>
 			<div class="current">${chosen ? `Chosen: <b>${escape(node.opts[chosen - 1]?.n || '')}</b>` : 'Nothing chosen yet: the node does nothing until you pick.'}</div>
-			<div class="list">${node.opts.map((o, i) => `<div class="card" data-opt="${i + 1}"><div><b>${escape(o.n)}</b>${chosen === i + 1 ? ' (active)' : ''}${o.fx.map(fx => `<small style="color:#8ec8ff">${escape(effectText(fx, state.mult))}</small>`).join('')}</div></div>`).join('')}</div>`;
+			<div class="list">${node.opts.map((o, i) => `<div class="card" data-opt="${i + 1}"><div><b>${escape(o.n)}</b>${chosen === i + 1 ? ' (active)' : ''}${o.fx.map(fx => `<small style="color:${isBad(fx) ? '#ff8a8a' : '#8ec8ff'}">${escape(effectText(fx, state.mult))}</small>`).join('')}</div></div>`).join('')}</div>`;
 	}
 	function renderPicker() {
 		const node = NODES.get(pickerNode);
@@ -737,10 +749,20 @@ export default function init(parameters, api) {
 	// ---- the Skills tab: spend skill points, learn any skill of any class ----
 	const etcPane = $('.etcpane');
 	let tab = 'tree';
-	const etcFilter = { group: -1, text: '', learned: false };
+	const etcFilter = { group: -1, text: '', learned: false, pool: '' };
 	const ETC_ROWS = 150;
 	const skillsLeft = () => Math.max(0, state.skillCollected - state.skillSpent);
-	const learnedLevel = id => (state.learned.find(([sid]) => sid === id) || [0, 0])[1];
+	const levelIn = (list, id) => (list.find(([sid]) => sid === id) || [0, 0])[1];
+	const learnedLevel = id => Math.max(levelIn(state.learned, id), levelIn(state.jobLearned, id), levelIn(state.banked, id));
+	/** Which points the buttons spend: 'ring' (outer ring) or 'job' (job skill points, only when the server allows it). */
+	const pool = () => (state.jobCustom && etcFilter.pool === 'job') || (state.jobCustom && !etcFilter.pool && !skillsLeft() && state.jobPoints > 0) ? 'job' : 'ring';
+	const poolLeft = () => (pool() === 'job' ? state.jobPoints : skillsLeft());
+	const reqText = id => {
+		const need = (SKILL_REQ[state.renewal ? 're' : 'pre'] || {})[id];
+		if (!need) return '';
+		return need.map(([rid, lv]) => `${SKILL_BY_ID.get(rid)?.[1] || `#${rid}`} Lv ${lv}`).join(', ');
+	};
+	const hiddenByTier = group => state.tierLock && (SKILL_GROUPS[group].t || 0) > state.tier;
 	/** The skills of this server's era: [id, name, max level, group]. */
 	const eraSkills = () => SKILLS.map(s => [s[0], s[1], state.renewal ? s[3] : s[2], s[4]]).filter(s => s[2] > 0);
 
@@ -752,16 +774,18 @@ export default function init(parameters, api) {
 		if (!state.loaded) html = '<span class="none">Asking the server...</span>';
 		else if (!state.start) html = '<span>Choose a first class to wake the tree.</span>';
 		else if (off) html = '<span>Skill points are switched off on this server.</span>';
-		else html = `<span>Skill points: <b class="big">${skillsLeft()}</b> left <small>(${state.skillCollected} of ${state.skillSetting} nodes taken, ${state.skillSpent} spent)</small></span>${state.skillCollected < state.skillSetting ? '<small>Take more cyan + nodes on the outer ring of the passive tree, reached from the north, east, south or west.</small>' : ''}`;
+		else html = `<span>Ring skill points: <b class="big">${skillsLeft()}</b> left <small>(${state.skillCollected} of ${state.skillSetting} nodes taken, ${state.skillSpent} spent)</small></span>${state.jobCustom ? `<span>Job skill points: <b class="big">${state.jobPoints}</b> <small>(prerequisites count)</small></span><span><label><input type="radio" name="pool" class="spool" value="ring"${pool() === 'ring' ? ' checked' : ''}> spend ring points</label> <label><input type="radio" name="pool" class="spool" value="job"${pool() === 'job' ? ' checked' : ''}> spend job points</label></span>` : ''}${state.skillCollected < state.skillSetting ? '<small>Take more cyan + nodes on the outer ring of the passive tree, reached from the north, east, south or west.</small>' : ''}${state.tierLock ? '<small>Only skills of your class tier and below can be learned.</small>' : ''}`;
 		head.innerHTML = html;
 	}
 	function renderEtcList() {
 		const box = etcPane.querySelector('.skills');
 		if (!box) return;
 		const words = etcFilter.text.toLowerCase().split(/\s+/).filter(Boolean);
-		const open = state.start && state.skillCollected > 0;
-		const left = skillsLeft();
+		const job = pool() === 'job';
+		const left = poolLeft();
+		const open = job ? state.jobCustom && state.jobPoints > 0 : state.start && state.skillCollected > 0;
 		let rows = eraSkills().filter(s => {
+			if (hiddenByTier(s[3])) return false;
 			if (etcFilter.group >= 0 && s[3] !== etcFilter.group) return false;
 			if (etcFilter.learned && !learnedLevel(s[0])) return false;
 			const hay = `${s[1]} ${SKILL_GROUPS[s[3]].n}`.toLowerCase();
@@ -776,7 +800,8 @@ export default function init(parameters, api) {
 				const have = learnedLevel(id);
 				const full = have >= max;
 				const next = !open || full || left < 1;
-				return `<div class="srow${have ? ' got' : ''}"><div class="sname">${escape(name)}<small>${escape(SKILL_GROUPS[group].n)} - max Lv ${max}</small></div>
+				const needs = job ? reqText(id) : '';
+				return `<div class="srow${have ? ' got' : ''}"><div class="sname">${escape(name)}<small>${escape(SKILL_GROUPS[group].n)} - max Lv ${max}${needs ? ` - needs ${escape(needs)}` : ''}</small></div>
 					<span class="slv">${have ? `Lv ${have} / ${max}` : `- / ${max}`}</span>
 					<button data-learn="${id}" data-to="${Math.min(max, have + 1)}"${next ? ' disabled' : ''} title="Learn the next level (1 point)">+1</button>
 					<button data-learn="${id}" data-to="${Math.min(max, have + left)}"${next ? ' disabled' : ''} title="Spend all your points on this skill, up to its maximum">Max</button></div>`;
@@ -786,9 +811,9 @@ export default function init(parameters, api) {
 	function renderEtc() {
 		if (tab !== 'etc') return;
 		if (!etcPane.querySelector('.skills')) {
-			const groups = SKILL_GROUPS.map((g, i) => [i, g]).filter(([, g]) => state.renewal || !g.re);
+			const groups = SKILL_GROUPS.map((g, i) => [i, g]).filter(([i, g]) => (state.renewal || !g.re) && !hiddenByTier(i));
 			etcPane.innerHTML = `<div class="etchead"></div>
-				<div class="etcnote">Learn any skill of any class: each level costs one point. Skill points are the cyan + nodes on the outer ring of the passive tree. Taking a skill point node back (or resetting the tree) after you spent its point resets your learned skills and gives the points back, so you learn them again. Skills you already have at that level cannot be bought again.</div>
+				<div class="etcnote">Learn any skill of any class: each level costs one point. Skill points are the cyan + nodes on the outer ring of the passive tree. Taking a skill point node back (or resetting the tree) after you spent its point resets your learned skills and gives the points back, so you learn them again. Skills you already have at that level cannot be bought again. Using the skill reset NPC takes the learned skills back too (job points are given back); the passive tree stays. Skills learned with ring points before a rebirth are kept for good and the ring can be taken again.</div>
 				<div class="etcbar"><select class="sgroup"><option value="-1">All classes</option>${groups.map(([i, g]) => `<option value="${i}">${escape(g.n)}</option>`).join('')}</select>
 					<input class="search ssearch" placeholder="Search skills..." autocomplete="off" spellcheck="false" value="${escape(etcFilter.text)}">
 					<label><input type="checkbox" class="sknown"${etcFilter.learned ? ' checked' : ''}> Learned only</label></div>
@@ -818,10 +843,11 @@ export default function init(parameters, api) {
 	etcPane.addEventListener('change', event => {
 		if (event.target.matches('.sgroup')) { etcFilter.group = Number(event.target.value); renderEtcList(); }
 		else if (event.target.matches('.sknown')) { etcFilter.learned = event.target.checked; renderEtcList(); }
+		else if (event.target.matches('.spool')) { etcFilter.pool = event.target.value; renderEtcHead(); renderEtcList(); }
 	});
 	etcPane.addEventListener('click', async event => {
 		const learn = event.target.closest('[data-learn]');
-		if (learn && !learn.disabled) await ask(`slearn ${learn.dataset.learn} ${learn.dataset.to}`);
+		if (learn && !learn.disabled) await ask(`${pool() === 'job' ? 'jlearn' : 'slearn'} ${learn.dataset.learn} ${learn.dataset.to}`);
 	});
 
 	// ---- hover, tooltip ----
@@ -839,7 +865,7 @@ export default function init(parameters, api) {
 	function showTip(sx, sy) {
 		const node = NODES.get(hover);
 		if (!node) { tip.hidden = true; return; }
-		const lines = node.fx.map(fx => `<div class="fx${fx.v < 0 ? ' bad' : ''}">${escape(effectText(fx, state.mult))}</div>`);
+		const lines = node.fx.map(fx => `<div class="fx${isBad(fx) ? ' bad' : ''}">${escape(effectText(fx, state.mult))}</div>`);
 		if (node.info) lines.push(`<div class="info">${escape(node.info)}</div>`);
 		if (node.opts) {
 			const chosen = state.choices.get(node.id);
