@@ -63,7 +63,6 @@ OnInit:
 	$@PT_skq$[21] = "20:4";
 	$@PT_skok[22] = 10;
 	$@PT_skt[22] = 1;
-	$@PT_skq$[22] = "35:1";
 	$@PT_skok[23] = 10;
 	$@PT_skt[23] = 1;
 	$@PT_skq$[23] = "22:3";
@@ -80,7 +79,6 @@ OnInit:
 	$@PT_skq$[27] = "26:2";
 	$@PT_skok[28] = 10;
 	$@PT_skt[28] = 1;
-	$@PT_skq$[28] = "23:5,248:10";
 	$@PT_skok[29] = 10;
 	$@PT_skt[29] = 1;
 	$@PT_skq$[29] = "28:3";
@@ -129,7 +127,6 @@ OnInit:
 	$@PT_skq$[45] = "44:1";
 	$@PT_skok[46] = 10;
 	$@PT_skt[46] = 1;
-	$@PT_skq$[46] = "44:10";
 	$@PT_skok[47] = 10;
 	$@PT_skt[47] = 1;
 	$@PT_skq$[47] = "46:5";
@@ -3474,7 +3471,6 @@ OnInit:
 	$@PT_skn$[31] = "Aqua Benedicta";
 	$@PT_skn$[33] = "Angelus";
 	$@PT_skn$[34] = "Blessing";
-	$@PT_skn$[35] = "Cure";
 	$@PT_skn$[36] = "Enlarge Weight Limit";
 	$@PT_skn$[37] = "Discount";
 	$@PT_skn$[39] = "Pushcart";

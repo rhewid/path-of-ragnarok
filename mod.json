@@ -1,6 +1,6 @@
 {
   "name": "path-of-ragnarok",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "author": "rhewid",
   "description": "Path of Ragnarok (made mainly for pre-renewal): a Path-of-Exile style passive skill tree for every character: your first class picks the origin in the centre, each job level earns a point, and 737 connected nodes give stats, resistances, damage against races and elements, skill boosts (including weak or neglected skills), status effects, auto-casts and free skill recasts, drains, weapon masteries, EXP and drop bonuses, utility skills, 12 trade-off keystones, job-line and rebirth branches, teleport rifts and choose-one masteries. 6 sockets take cards. Saved builds. Inner branches for Gunslinger, Ninja and Taekwon. 10 skill points on the outer ring buy any skill of any class (within your class tier) on the Skills tab; optionally the job skill points can too. Search it, open it with Alt+P or @passive.",
   "requires": {

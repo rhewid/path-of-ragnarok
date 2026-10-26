@@ -1,6 +1,12 @@
 # Changelog
 
 All notable changes to Path of Ragnarok. Newest first.
+## 1.3.1
+
+### Fixed
+
+- **Divine Protection could not be learned** (Acolyte): it needed Cure 1, Cure needed Heal 2, Heal needed Demon Bane 5 and Faith 10, and Demon Bane needed Divine Protection 3, a loop where no skill could be taken first. Skill prerequisites are now taken from the class that first lists the skill, so a skill the base class has with no requirement has none (Divine Protection, Heal; also skill 46 in both eras and Cure's Status Recovery link in pre-renewal). Tree check: no prerequisite loops remain.
+
 
 ## 1.3.0
 

@@ -292,6 +292,7 @@ Press **Apply** after changing settings; the server restarts. Reload the client 
 ## Changelog
 
 - **1.3.0** Gunslinger, Ninja and Taekwon start at the Wanderer centre and get inner and outer branches (with free recasts of the Ninja stone spells); border keystones belong to one region so classes no longer reach each other's nodes early; class tier lock for skills; job skill points can learn any skill (off by default); skill reset NPC; ring skills kept after rebirth and the ring can be taken again; every job earns passive points (cap default 150); positive penalties show red; fix for the script not loading. Full list in [CHANGELOG.md](CHANGELOG.md).
+- **1.3.1** Fix: Divine Protection could not be learned (its prerequisites formed a loop with Cure, Heal and Demon Bane). Skill prerequisites now follow the base class tree.
 - **1.2.1** Fix: taking back skill point nodes below the points spent resets the learned skills (you learn them again), so refunding or resetting cannot keep skills for free. The window asks to confirm first.
 - **1.2.0** Nodes no longer teach skills permanently (taken back from existing characters). New **Skills tab**: 10 skill points collected on four-entrance outer ring of the tree, learn any skill of any class. Setting "Nodes can teach skills" replaced by "Most skill points".
 - **1.1.0** Up to 5 saved builds per character with a swap price (new settings "Saved builds per character" and "Swapping to a saved build: price").

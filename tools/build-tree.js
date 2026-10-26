@@ -1306,23 +1306,24 @@ async function writeSkills() {
 export const SKILL_GROUPS = ${JSON.stringify(groups)};
 export const SKILLS = ${JSON.stringify(rows)};
 `);
-	// prerequisites (rAthena skill_tree.yml): the first job in the file that lists a skill with Requires decides
+	// prerequisites (rAthena skill_tree.yml): the first job in the file that lists a skill decides (a first listing without Requires means none)
 	const req = {};
 	for (const era of ['pre-re', 're']) {
 		const names = new Map();
 		for (const [id, sk] of eras[era]) names.set(sk.name, id);
 		const yml = await fetchCached(`skill_tree_${era}.yml`, `${RA}${era}/skill_tree.yml`);
 		const found = new Map();
-		let name = null, list = null;
+		let name = null, list = null, entry = 0;
+		const first = new Map();
 		for (const line of yml.split(/\r?\n/)) {
 			let m;
-			if ((m = /^      - Name: (\w+)/.exec(line))) { name = m[1]; list = null; }
+			if ((m = /^      - Name: (\w+)/.exec(line))) { name = m[1]; list = null; entry++; if (!first.has(name)) first.set(name, entry); }
 			else if (/^        Requires:/.test(line)) list = [];
 			else if (list && (m = /^          - Name: (\w+)/.exec(line))) list.push([m[1], 0]);
 			else if (list && list.length && (m = /^            Level: (\d+)/.exec(line))) {
 				list[list.length - 1][1] = Number(m[1]);
 				const id = names.get(name);
-				if (id && !found.has(id)) found.set(id, list);
+				if (id && !found.has(id) && first.get(name) === entry) found.set(id, list);
 			}
 		}
 		req[era] = {};
